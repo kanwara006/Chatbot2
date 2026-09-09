@@ -60,9 +60,13 @@ export interface Conversation {
 }
 
 export interface MessageSource {
+  id?: number
+  documentId?: number
   filename: string
-  chunkContent: string
-  documentId: number
+  page?: string | number
+  pageNumber?: string | number
+  chunkContent?: string
+  similarity?: number
 }
 
 export interface Message {

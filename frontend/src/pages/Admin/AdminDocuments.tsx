@@ -3,14 +3,13 @@ import { Upload, FileText, CheckCircle, AlertCircle, Loader, Trash2, Eye } from 
 import toast from 'react-hot-toast'
 import type { Document, DocumentStatus } from '@/types'
 
-// ── Mock Documents ──────────────────────────────────────────────────
+// ── Real Uploaded Documents ──────────────────────────────────────────
 const initDocs: Document[] = [
-  { id: 1, filename: 'slf-process-2569.pdf', originalName: 'ขั้นตอนการดำเนินการกู้ยืม ปี 2569.pdf',         fileType: 'pdf', fileSize: 1240000, status: 'ready',   uploadedBy: 1, createdAt: '2026-08-10' },
-  { id: 2, filename: 'slf-announce-1-2569.pdf', originalName: 'ประกาศ กยศ. ภาคเรียนที่ 1/2569.pdf',       fileType: 'pdf', fileSize: 890000,  status: 'ready',   uploadedBy: 1, createdAt: '2026-08-08' },
-  { id: 3, filename: 'slf-volunteer-2569.pdf', originalName: 'ระเบียบกิจกรรมจิตอาสา กยศ. 2569.pdf',     fileType: 'pdf', fileSize: 540000,  status: 'ready',   uploadedBy: 1, createdAt: '2026-08-05' },
-  { id: 4, filename: 'slf-docs-list.pdf', originalName: 'รายการเอกสารการกู้ยืม กยศ. 2569.pdf',           fileType: 'pdf', fileSize: 320000,  status: 'ready',   uploadedBy: 1, createdAt: '2026-08-03' },
-  { id: 5, filename: 'slf-calendar.pdf', originalName: 'ปฏิทินกำหนดการ กยศ. ปีการศึกษา 2569.pdf',        fileType: 'pdf', fileSize: 450000,  status: 'ready',   uploadedBy: 1, createdAt: '2026-08-01' },
-  { id: 6, filename: 'psu-slf-handbook.pdf', originalName: 'คู่มือนักศึกษา กยศ. มหาวิทยาลัยสงขลานครินทร์.pdf', fileType: 'pdf', fileSize: 2100000, status: 'processing', uploadedBy: 1, createdAt: '2026-08-19' },
+  { id: 1, filename: 'ข้อมูลการเก็บชั่วโมงจิตอาสา กยศ.pdf', originalName: 'ข้อมูลการเก็บชั่วโมงจิตอาสา กยศ.pdf', fileType: 'pdf', fileSize: 91087, status: 'ready', uploadedBy: 1, createdAt: '2026-08-29' },
+  { id: 2, filename: 'คุณสมบัติผู้กู้.pdf', originalName: 'คุณสมบัติผู้กู้.pdf', fileType: 'pdf', fileSize: 4970682, status: 'ready', uploadedBy: 1, createdAt: '2026-08-29' },
+  { id: 3, filename: 'ประกาศกำหนดการผู้กูัรายใหม่.pdf', originalName: 'ประกาศกำหนดการผู้กูัรายใหม่.pdf', fileType: 'pdf', fileSize: 145406, status: 'ready', uploadedBy: 1, createdAt: '2026-08-29' },
+  { id: 4, filename: 'ประชาสัมพันธ์สำหรับนักศึกษา กยศ. (รายเก่าต่อเนื่อง).pdf', originalName: 'ประชาสัมพันธ์สำหรับนักศึกษา กยศ. (รายเก่าต่อเนื่อง).pdf', fileType: 'pdf', fileSize: 175711, status: 'ready', uploadedBy: 1, createdAt: '2026-08-29' },
+  { id: 5, filename: 'ภาพรวมระบบการให้กู้ยืมการศึกษา 2569 สำหรับผู้กู้ยืมเงินรายใหม่.pdf', originalName: 'ภาพรวมระบบการให้กู้ยืมการศึกษา 2569 สำหรับผู้กู้ยืมเงินรายใหม่.pdf', fileType: 'pdf', fileSize: 499096, status: 'ready', uploadedBy: 1, createdAt: '2026-08-29' },
 ]
 
 function formatSize(bytes: number) {

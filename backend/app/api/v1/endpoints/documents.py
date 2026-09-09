@@ -30,8 +30,10 @@ def process_document_task(document_id: int, db_url: str):
         doc.status = "processing"
         db.commit()
 
-        # Simulated or actual ingestion
-        # In Phase 7 & 10, full Chroma embedding will run here
+        from app.services.rag import get_rag_service
+        rag_svc = get_rag_service()
+        rag_svc.rebuild_index()
+
         doc.status = "ready"
         db.commit()
     except Exception as e:

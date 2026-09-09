@@ -7,12 +7,12 @@ import {
 } from 'lucide-react'
 
 const navItems = [
-  { to: '/admin',            icon: LayoutDashboard, label: 'Dashboard',       end: true },
-  { to: '/admin/documents',  icon: FileText,        label: 'Knowledge Base' },
-  { to: '/admin/announcements', icon: Megaphone,    label: 'ประกาศ' },
-  { to: '/admin/faq',        icon: HelpCircle,      label: 'FAQ' },
-  { to: '/admin/users',      icon: Users,           label: 'ผู้ใช้งาน' },
-  { to: '/admin/chats',      icon: MessageSquare,   label: 'ประวัติ Chat' },
+  { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
+  { to: '/admin/documents', icon: FileText, label: 'Knowledge Base' },
+  { to: '/admin/announcements', icon: Megaphone, label: 'ประกาศ' },
+  { to: '/admin/faq', icon: HelpCircle, label: 'FAQ' },
+  { to: '/admin/users', icon: Users, label: 'ผู้ใช้งาน' },
+  { to: '/admin/chats', icon: MessageSquare, label: 'ประวัติ Chat' },
 ]
 
 /**
@@ -29,10 +29,10 @@ export default function AdminSidebar() {
     <aside
       className="flex flex-col h-full transition-all duration-300"
       style={{
-        width:       collapsed ? 64 : 240,
-        background:  '#0B2E5E',
+        width: collapsed ? 64 : 240,
+        background: '#0B2E5E',
         borderRight: '1px solid rgba(255,255,255,0.06)',
-        flexShrink:  0,
+        flexShrink: 0,
       }}
     >
       {/* ── Brand ───────────────────────────────────────────────── */}

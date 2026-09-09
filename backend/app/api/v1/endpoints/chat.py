@@ -69,19 +69,26 @@ MOCK_ANSWERS = [
 ]
 
 
+from app.services.rag import get_rag_service
+
+
 def generate_chat_response(query: str):
-    query_lower = query.lower()
-    for item in MOCK_ANSWERS:
-        if any(kw in query_lower for kw in item["keywords"]):
-            return item["answer"], item["sources"]
+    try:
+        rag_svc = get_rag_service()
+        result = rag_svc.query(query)
+        answer = result.get("answer", "")
+        sources = result.get("retrieval", [])
+        return answer, sources
+    except Exception as e:
+        # Fallback in case of error
+        query_lower = query.lower()
+        for item in MOCK_ANSWERS:
+            if any(kw in query_lower for kw in item["keywords"]):
+                return item["answer"], item["sources"]
 
-    default_answer = f"""ขออภัย ไม่พบข้อมูลที่เพียงพอสำหรับตอบคำถาม "{query}" จากเอกสาร กยศ.
-
-กรุณาติดต่อเจ้าหน้าที่กองทุนเงินให้กู้ยืมเพื่อการศึกษา มหาวิทยาลัยสงขลานครินทร์ วิทยาเขตสุราษฎร์ธานี เพื่อสอบถามข้อมูลเพิ่มเติม
-
-📞 โทร: 077-278-xxx
-📧 Email: studentloan@psu.ac.th"""
-    return default_answer, []
+        default_answer = f"""ขออภัย เกิดข้อผิดพลาดในการประมวลผล RAG ({str(e)})
+กรุณาติดต่อเจ้าหน้าที่กองทุนเงินให้กู้ยืมเพื่อการศึกษา มหาวิทยาลัยสงขลานครินทร์ วิทยาเขตสุราษฎร์ธานี เพื่อสอบถามข้อมูลเพิ่มเติม"""
+        return default_answer, []
 
 
 @router.get("/conversations", response_model=List[ConversationResponse])
@@ -175,7 +182,8 @@ def send_message(
         source_record = MessageSource(
             message_id=ai_msg.id,
             filename=src["filename"],
-            chunk_content=src["chunk_content"],
+            page_number=str(src.get("page", "")) if src.get("page") is not None else None,
+            chunk_content=src.get("chunk_content", ""),
             similarity_score=src.get("similarity", "0.90")
         )
         db.add(source_record)

@@ -40,6 +40,7 @@ class MessageSource(Base):
     message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), nullable=False)
     document_id = Column(Integer, ForeignKey("documents.id", ondelete="SET NULL"), nullable=True)
     filename = Column(String(255), nullable=False)
+    page_number = Column(String(50), nullable=True)
     chunk_content = Column(Text, nullable=False)
     similarity_score = Column(String(20), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)

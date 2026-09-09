@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, model_validator
+from typing import Optional, List, Any
 from datetime import datetime
 
 
@@ -7,8 +7,24 @@ class MessageSourceResponse(BaseModel):
     id: int
     document_id: Optional[int] = None
     filename: str
-    chunk_content: str
+    page_number: Optional[str] = None
+    page: Optional[str] = None
+    chunk_content: Optional[str] = ""
     similarity_score: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_page_field(cls, data: Any) -> Any:
+        if hasattr(data, "page_number") and getattr(data, "page_number"):
+            # If ORM object
+            if not getattr(data, "page", None):
+                setattr(data, "page", getattr(data, "page_number"))
+        elif isinstance(data, dict):
+            if "page_number" in data and not data.get("page"):
+                data["page"] = data["page_number"]
+            elif "page" in data and not data.get("page_number"):
+                data["page_number"] = str(data["page"])
+        return data
 
     class Config:
         from_attributes = True

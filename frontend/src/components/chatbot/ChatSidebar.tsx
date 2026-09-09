@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, MessageSquare, ChevronLeft, MoreVertical, Bell, User, LogOut, ChevronUp, Home } from 'lucide-react'
 import type { Conversation } from '@/types'
@@ -22,6 +23,7 @@ export default function ChatSidebar({
   onDelete,
   onCollapse,
 }: ChatSidebarProps) {
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   return (
     <aside
       className="flex flex-col h-full bg-[#062E66] text-white select-none"
@@ -136,28 +138,39 @@ export default function ChatSidebar({
 
       {/* ── 3. Bottom Action Buttons & User Profile Bar ─────────────── */}
       <div className="p-3 bg-[#041F47] border-t border-white/10 space-y-2">
-        {/* Button 1: Profile */}
-        <Link
-          to="/profile"
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-white bg-[#0B4DBA] hover:bg-[#1E40AF] transition-colors"
-        >
-          <User size={14} />
-          <span>ดูข้อมูลส่วนตัว</span>
-        </Link>
+        {/* Expandable Menu: Profile & Logout */}
+        {isUserMenuOpen && (
+          <div className="space-y-2 pb-1 animate-fade-in">
+            {/* Button 1: Profile */}
+            <Link
+              to="/profile"
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-white bg-[#0B4DBA] hover:bg-[#1E40AF] transition-colors"
+            >
+              <User size={14} />
+              <span>ดูข้อมูลส่วนตัว</span>
+            </Link>
 
-        {/* Button 2: Logout */}
-        <Link
-          to="/"
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-white bg-[#0B4DBA] hover:bg-[#1E40AF] transition-colors"
-        >
-          <LogOut size={14} />
-          <span>ออกจากระบบ</span>
-        </Link>
+            {/* Button 2: Logout */}
+            <Link
+              to="/"
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-white bg-[#0B4DBA] hover:bg-[#1E40AF] transition-colors"
+            >
+              <LogOut size={14} />
+              <span>ออกจากระบบ</span>
+            </Link>
+          </div>
+        )}
 
-        {/* User Card */}
-        <div className="pt-2 flex items-center justify-between px-2 text-white">
+        {/* User Card & Toggle Arrow */}
+        <button
+          type="button"
+          onClick={() => setIsUserMenuOpen((prev) => !prev)}
+          className="w-full flex items-center justify-between px-2 py-1.5 rounded-xl hover:bg-white/5 transition-colors text-white text-left cursor-pointer group"
+          aria-expanded={isUserMenuOpen}
+          aria-label="เมนูผู้ใช้งาน"
+        >
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-[#1E3A8A] flex items-center justify-center text-white flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#1E3A8A] flex items-center justify-center text-white flex-shrink-0 group-hover:bg-[#1E40AF] transition-colors">
               <User size={15} />
             </div>
             <div className="min-w-0 leading-tight">
@@ -165,8 +178,13 @@ export default function ChatSidebar({
               <p className="text-[10px] text-white/50 truncate">รหัส: 6630214001</p>
             </div>
           </div>
-          <ChevronUp size={14} className="text-white/40" />
-        </div>
+          <ChevronUp
+            size={16}
+            className={`text-white/50 group-hover:text-white transition-transform duration-200 ${
+              isUserMenuOpen ? 'rotate-180' : 'rotate-0'
+            }`}
+          />
+        </button>
       </div>
     </aside>
   )

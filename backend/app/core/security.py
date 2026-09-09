@@ -10,6 +10,7 @@ from app.core.database import get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login", auto_error=False)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -37,7 +38,7 @@ def create_access_token(
 
 
 def get_current_user_optional(
-    token: Optional[str] = Depends(oauth2_scheme),
+    token: Optional[str] = Depends(oauth2_scheme_optional),
     db: Session = Depends(get_db)
 ):
     """

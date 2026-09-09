@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     CHROMA_PERSIST_DIR: str = "./chroma_data"
+    FAISS_INDEX_DIR: str = "./faiss_index"
     UPLOAD_DIR: str = "./uploads"
 
     model_config = SettingsConfigDict(
