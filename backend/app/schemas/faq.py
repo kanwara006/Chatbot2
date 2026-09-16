@@ -6,7 +6,8 @@ from datetime import datetime
 class FAQBase(BaseModel):
     question: str
     answer: str
-    category: str = "ทั่วไป"
+    category_id: Optional[int] = None
+    keywords: Optional[str] = None
     order_num: int = 0
     is_active: bool = True
 
@@ -18,7 +19,8 @@ class FAQCreate(FAQBase):
 class FAQUpdate(BaseModel):
     question: Optional[str] = None
     answer: Optional[str] = None
-    category: Optional[str] = None
+    category_id: Optional[int] = None
+    keywords: Optional[str] = None
     order_num: Optional[int] = None
     is_active: Optional[bool] = None
 

@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_admin_user, get_current_user_optional
@@ -14,7 +14,7 @@ router = APIRouter()
 def get_faqs(
     skip: int = 0,
     limit: int = 100,
-    category: Optional[str] = None,
+    category_id: Optional[int] = None,
     search: Optional[str] = None,
     is_active: Optional[bool] = None,
     db: Session = Depends(get_db),
@@ -28,8 +28,8 @@ def get_faqs(
     elif is_active is not None:
         query = query.filter(FAQ.is_active == is_active)
 
-    if category and category != "ทั้งหมด":
-        query = query.filter(FAQ.category == category)
+    if category_id is not None:
+        query = query.filter(FAQ.category_id == category_id)
     if search:
         s = f"%{search}%"
         query = query.filter((FAQ.question.ilike(s)) | (FAQ.answer.ilike(s)))

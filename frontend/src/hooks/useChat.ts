@@ -1,60 +1,65 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import type { Message, Conversation } from '@/types'
 import {
-  simulateAIResponse,
-  getStoredConversations,
-  saveConversation,
-  deleteConversation,
+  sendChatMessage,
+  fetchConversations,
+  fetchConversationMessages,
+  deleteConversationRemote,
+  submitMessageFeedback,
   generateId,
 } from '@/services/chatService'
+import { useAuth } from '@/context/AuthContext'
 
 /**
  * useChat — Custom hook สำหรับจัดการ State ของ Chat ทั้งหมด
  *
- * Input:  ไม่มี parameter
- * Process:
- *   - เก็บ state ของ conversations, messages, loading
- *   - sendMessage() → ส่งคำถาม → จำลอง AI response → อัปเดต state
- * Output: ค่า state และฟังก์ชันต่าง ๆ ที่ component ใช้งาน
+ * ผู้ใช้ที่เข้าสู่ระบบ: ประวัติการสนทนาโหลด/บันทึกผ่าน backend จริง
+ * ผู้ใช้ที่ไม่ได้เข้าสู่ระบบ: ไม่มีการบันทึกประวัติใด ๆ (เก็บแค่ใน state ของหน้านี้)
  */
 export function useChat() {
-  const [conversations, setConversations] = useState<Conversation[]>(
-    () => getStoredConversations()
-  )
+  const { isAuthenticated } = useAuth()
+  const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // เลื่อน scroll ลงล่างสุดอัตโนมัติ
+  // โหลดประวัติการสนทนาจาก backend เฉพาะผู้ใช้ที่เข้าสู่ระบบเท่านั้น
+  useEffect(() => {
+    setActiveConversationId(null)
+    setMessages([])
+    if (isAuthenticated) {
+      fetchConversations().then(setConversations)
+    } else {
+      setConversations([])
+    }
+  }, [isAuthenticated])
+
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, 50)
   }, [])
 
-  // สร้าง Conversation ใหม่
   const createNewConversation = useCallback(() => {
     setActiveConversationId(null)
     setMessages([])
   }, [])
 
-  // เปิด Conversation เก่า
   const openConversation = useCallback(
-    (convId: number) => {
+    async (convId: number) => {
       setActiveConversationId(convId)
-      // Phase 8: โหลด messages จาก API
-      // ตอนนี้ใช้ mock messages เดิมหรือว่างเปล่า
-      setMessages([])
+      const msgs = await fetchConversationMessages(convId)
+      setMessages(msgs)
+      scrollToBottom()
     },
-    []
+    [scrollToBottom]
   )
 
-  // ลบ Conversation
   const removeConversation = useCallback(
-    (convId: number) => {
-      deleteConversation(convId)
+    async (convId: number) => {
+      await deleteConversationRemote(convId)
       setConversations((prev) => prev.filter((c) => c.id !== convId))
       if (activeConversationId === convId) {
         setActiveConversationId(null)
@@ -64,88 +69,56 @@ export function useChat() {
     [activeConversationId]
   )
 
-  // ส่งข้อความ — จุดหลักของ Chat Flow
   const sendMessage = useCallback(
     async (question: string) => {
       if (!question.trim() || isLoading) return
 
-      // ── 1. เพิ่มข้อความของ User ─────────────────────────────────
       const userMsg: Message = {
-        id:             generateId(),
+        id: generateId(),
         conversationId: activeConversationId ?? 0,
-        role:           'user',
-        content:        question,
-        createdAt:      new Date().toISOString(),
+        role: 'user',
+        content: question,
+        createdAt: new Date().toISOString(),
       }
       setMessages((prev) => [...prev, userMsg])
       setIsLoading(true)
       scrollToBottom()
 
-      try {
-        // ── 2. ส่งคำถามไป AI (mock) / Phase 8: ส่งไป Backend จริง ──
-        const { answer, sources } = await simulateAIResponse(question)
+      const aiMsg = await sendChatMessage(question, activeConversationId)
+      setMessages((prev) => [...prev, aiMsg])
 
-        // ── 3. เพิ่มข้อความของ AI ──────────────────────────────────
-        const aiMsg: Message = {
-          id:             generateId(),
-          conversationId: activeConversationId ?? 0,
-          role:           'assistant',
-          content:        answer,
-          sources:        sources,
-          createdAt:      new Date().toISOString(),
-        }
-        setMessages((prev) => [...prev, aiMsg])
-
-        // ── 4. สร้าง/อัปเดต Conversation ────────────────────────────
-        let convId = activeConversationId
-        if (!convId) {
-          convId = generateId()
+      // มีแค่ผู้ใช้ที่เข้าสู่ระบบเท่านั้นที่มีประวัติการสนทนาให้อัปเดตในแถบข้าง
+      if (isAuthenticated) {
+        if (!activeConversationId) {
+          const convId = aiMsg.conversationId
           const title = question.length > 30 ? question.slice(0, 30) + '...' : question
           const newConv: Conversation = {
-            id:        convId,
-            userId:    1,
+            id: convId,
+            userId: 0,
             title,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           }
-          saveConversation(newConv)
           setConversations((prev) => [newConv, ...prev])
           setActiveConversationId(convId)
         } else {
-          // อัปเดต updatedAt ของ conversation ที่มีอยู่
           setConversations((prev) =>
             prev.map((c) =>
-              c.id === convId ? { ...c, updatedAt: new Date().toISOString() } : c
+              c.id === activeConversationId ? { ...c, updatedAt: new Date().toISOString() } : c
             )
           )
         }
-      } catch {
-        // ── Error: แสดงข้อความเป็นมิตร ──────────────────────────────
-        const errMsg: Message = {
-          id:             generateId(),
-          conversationId: activeConversationId ?? 0,
-          role:           'assistant',
-          content:        'ขออภัย ระบบไม่สามารถประมวลผลคำถามได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง',
-          createdAt:      new Date().toISOString(),
-        }
-        setMessages((prev) => [...prev, errMsg])
-      } finally {
-        setIsLoading(false)
-        scrollToBottom()
       }
+
+      setIsLoading(false)
+      scrollToBottom()
     },
-    [activeConversationId, isLoading, scrollToBottom]
+    [activeConversationId, isLoading, isAuthenticated, scrollToBottom]
   )
 
-  // Toggle like/dislike feedback (Phase 8: ส่งไป API)
-  const submitFeedback = useCallback(
-    (_messageId: number, _rating: 'like' | 'dislike') => {
-      // Phase 8: axios.post('/api/chat/feedback', { messageId, rating })
-      // ตอนนี้แค่ log
-      console.log('Feedback submitted:', _messageId, _rating)
-    },
-    []
-  )
+  const submitFeedback = useCallback((messageId: number, rating: 'like' | 'dislike') => {
+    submitMessageFeedback(messageId, rating)
+  }, [])
 
   return {
     conversations,

@@ -32,10 +32,11 @@ export interface Announcement {
   id: number
   title: string
   content: string
-  category: string
+  categoryId?: number
   academicYear: string
   attachmentUrl?: string
   isPublished: boolean
+  eventDate?: string
   publishedAt: string
   createdAt: string
 }
@@ -45,7 +46,8 @@ export interface FAQ {
   id: number
   question: string
   answer: string
-  category: string
+  categoryId?: number
+  keywords?: string
   isActive: boolean
   orderIndex: number
 }
@@ -65,7 +67,6 @@ export interface MessageSource {
   filename: string
   page?: string | number
   pageNumber?: string | number
-  chunkContent?: string
   similarity?: number
 }
 
@@ -98,8 +99,13 @@ export interface Document {
   fileType: 'pdf' | 'docx' | 'txt'
   fileSize: number
   status: DocumentStatus
+  categoryId?: number
+  description?: string
+  isActive: boolean
+  displayOrder: number
   uploadedBy: number
   createdAt: string
+  updatedAt: string
 }
 
 // ── API Response ──────────────────────────

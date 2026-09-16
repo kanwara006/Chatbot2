@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime
-from datetime import datetime, timezone
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from app.core.timezone import now_th
 from app.core.database import Base
 
 
@@ -9,8 +10,12 @@ class FAQ(Base):
     id = Column(Integer, primary_key=True, index=True)
     question = Column(String(500), nullable=False)
     answer = Column(Text, nullable=False)
-    category = Column(String(50), default="ทั่วไป", nullable=False)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
+    keywords = Column(String(500), nullable=True)
     order_num = Column(Integer, default=0, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime, default=now_th, nullable=False)
+    updated_at = Column(DateTime, default=now_th, onupdate=now_th, nullable=False)
+
+    # Relationships
+    category = relationship("Category", back_populates="faqs")

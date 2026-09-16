@@ -29,7 +29,7 @@
   --color-info:           #3B82F6;
 
   /* Typography */
-  --font-sans: 'IBM Plex Sans Thai', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Sarabun', ui-sans-serif, system-ui, sans-serif;
 
   /* Border Radius */
   --radius-card-sm:  12px;
@@ -37,9 +37,9 @@
   --radius-card-lg:  20px;
   --radius-pill:     9999px;
 
-  /* Shadows — Subtle & Clean */
-  --shadow-card:       0 2px 12px rgba(6, 46, 102, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
-  --shadow-card-hover: 0 8px 24px rgba(6, 46, 102, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03);
+  /* Shadows — Bold & Dimensional */
+  --shadow-card:       0 2px 4px rgba(6, 46, 102, 0.05), 0 10px 24px rgba(6, 46, 102, 0.09), 0 28px 56px -16px rgba(6, 46, 102, 0.18), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  --shadow-card-hover: 0 6px 12px rgba(6, 46, 102, 0.08), 0 22px 44px rgba(6, 46, 102, 0.14), 0 40px 72px -16px rgba(11, 77, 186, 0.30), 0 1px 0 rgba(255, 255, 255, 0.5) inset;
   --shadow-nav:        0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-btn:        0 2px 8px rgba(11, 77, 186, 0.20);
   --shadow-floating:   0 10px 30px rgba(6, 46, 102, 0.08);
@@ -68,6 +68,14 @@ body {
   line-height: 1.6;
   margin: 0;
   overflow-x: hidden;
+}
+
+/* Force the same Thai font everywhere, including form controls and
+   chart SVG text (libraries like Recharts don't always inherit it). */
+input, select, textarea, button,
+table, th, td,
+.recharts-wrapper, .recharts-wrapper text, .recharts-default-tooltip {
+  font-family: var(--font-sans);
 }
 
 /* ─────────────────────────────────────────
@@ -127,16 +135,25 @@ body {
 
 /* Card base */
 .card {
-  background: var(--color-white);
-  border-radius: var(--radius-card);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FCFDFF 100%);
+  border-radius: 22px;
   box-shadow: var(--shadow-card);
-  border: 1px solid var(--color-border);
-  transition: all 200ms var(--ease-smooth);
+  border: 1px solid var(--color-border-light);
+  transition: all 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .card:hover {
   box-shadow: var(--shadow-card-hover);
-  border-color: #CBD5E1;
+  border-color: rgba(11, 77, 186, 0.25);
+  transform: translateY(-6px) scale(1.008);
+}
+
+/* Admin card — flat, formal, clean (no bounce/lift; data-focused panels, not marketing cards) */
+.admin-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #DDE3EC;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 /* Primary Button (Navy Filled) */
@@ -167,59 +184,6 @@ body {
 
 .btn-primary:active {
   transform: translateY(0);
-}
-
-/* Blue Accent Button (PSU Blue Filled) */
-.btn-blue {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: var(--color-primary-blue);
-  color: var(--color-white);
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 14px;
-  padding: 10px 22px;
-  border-radius: var(--radius-pill);
-  border: 1.5px solid var(--color-primary-blue);
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 180ms var(--ease-smooth);
-  box-shadow: var(--shadow-btn);
-}
-
-.btn-blue:hover {
-  background: #083c93;
-  border-color: #083c93;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(11, 77, 186, 0.35);
-}
-
-/* CTA Bright Blue Button (e.g. Hero CTA) */
-.btn-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: var(--color-cta-blue);
-  color: var(--color-white);
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 15px;
-  padding: 12px 28px;
-  border-radius: var(--radius-pill);
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 180ms var(--ease-smooth);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
-}
-
-.btn-cta:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 22px rgba(59, 130, 246, 0.45);
 }
 
 /* Secondary Button (Navy Outline) */
@@ -287,11 +251,6 @@ body {
   border: 1px solid #C7D9FE;
 }
 
-.badge-navy {
-  background: rgba(6, 46, 102, 0.08);
-  color: var(--color-primary-navy);
-}
-
 /* Section Headings */
 .section-heading {
   font-size: clamp(22px, 2.5vw, 26px);
@@ -304,24 +263,9 @@ body {
 /* ─────────────────────────────────────────
    Animations & Transitions
    ───────────────────────────────────────── */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.3s var(--ease-smooth) both;
 }
 
 .animate-fade-in {

@@ -1,10 +1,9 @@
-from datetime import datetime, timezone
 from app.core.database import SessionLocal, Base, engine
 from app.core.security import get_password_hash
 from app.models.user import User
+from app.models.category import Category
 from app.models.announcement import Announcement
 from app.models.faq import FAQ
-from app.models.document import Document
 
 
 def seed_database():
@@ -46,34 +45,54 @@ def seed_database():
             db.add(student)
             print("[OK] Created sample student user: somchai.j@psu.ac.th / student123")
 
-        # 3. Seed FAQs
+        # 3. Seed Categories
+        if db.query(Category).count() == 0:
+            categories = [
+                Category(name="คุณสมบัติผู้กู้", description="ข้อมูลเกี่ยวกับคุณสมบัติของผู้กู้ยืม กยศ.", icon="graduation-cap", display_order=1),
+                Category(name="เอกสารที่ใช้", description="รายการเอกสารประกอบการยื่นคำขอกู้ยืม", icon="file-text", display_order=2),
+                Category(name="ขั้นตอนการกู้ยืม", description="คู่มือและขั้นตอนการดำเนินการกู้ยืมรายเก่าและรายใหม่", icon="landmark", display_order=3),
+                Category(name="การรับเงิน/คืนเงิน", description="ข้อมูลการโอนเงินค่าครองชีพและการชำระหนี้คืน", icon="banknote", display_order=4),
+                Category(name="จิตอาสา", description="ข้อมูลกิจกรรมจิตอาสาและการบันทึกชั่วโมง", icon="hand-heart", display_order=5),
+                Category(name="ติดต่อสอบถาม", description="ช่องทางการติดต่อเจ้าหน้าที่และหน่วยงานที่เกี่ยวข้อง", icon="phone", display_order=6),
+            ]
+            db.add_all(categories)
+            db.commit()
+            print("[OK] Seeded categories")
+
+        cat_by_name = {c.name: c for c in db.query(Category).all()}
+
+        # 4. Seed FAQs
         if db.query(FAQ).count() == 0:
             sample_faqs = [
                 FAQ(
                     question="ใครมีสิทธิ์กู้ยืมเงิน กยศ. บ้าง?",
                     answer="นักศึกษาที่มีคุณสมบัติ: 1. มีรายได้ครอบครัวไม่เกิน 360,000 บาทต่อปี 2. เป็นนักศึกษามหาวิทยาลัยสงขลานครินทร์ 3. มีผลการเรียนและความประพฤติตามเกณฑ์",
-                    category="การสมัคร",
+                    category_id=cat_by_name["คุณสมบัติผู้กู้"].id,
+                    keywords="คุณสมบัติ, ผู้กู้, สิทธิ์",
                     order_num=1,
                     is_active=True
                 ),
                 FAQ(
                     question="ต้องเตรียมเอกสารอะไรบ้างในการกู้ยืม กยศ.?",
                     answer="เอกสารที่ต้องใช้: สำเนาบัตรประชาชนนักศึกษาและผู้ปกครอง, สำเนาทะเบียนบ้าน, หนังสือรับรองรายได้ครอบครัว, รูปถ่าย 1 นิ้ว 2 รูป",
-                    category="เอกสาร",
+                    category_id=cat_by_name["เอกสารที่ใช้"].id,
+                    keywords="เอกสาร, บัตรประชาชน, ทะเบียนบ้าน",
                     order_num=2,
                     is_active=True
                 ),
                 FAQ(
                     question="ต้องทำกิจกรรมจิตอาสากี่ชั่วโมง?",
                     answer="ผู้กู้ยืม กยศ. ต้องทำกิจกรรมจิตอาสาไม่น้อยกว่า 36 ชั่วโมงต่อปีการศึกษา และบันทึกผ่านระบบ กยศ. Connect",
-                    category="จิตอาสา",
+                    category_id=cat_by_name["จิตอาสา"].id,
+                    keywords="จิตอาสา, ชั่วโมง, กยศ Connect",
                     order_num=3,
                     is_active=True
                 ),
                 FAQ(
                     question="ผู้กู้รายเก่าต้องดำเนินการอย่างไรเพื่อต่อสัญญา?",
                     answer="เข้าสู่ระบบ กยศ. Connect ตรวจสอบชั่วโมงจิตอาสา (ต้องครบ 36 ชั่วโมง) และยื่นคำขอกู้ยืมใหม่พร้อมส่งเอกสารตามกำหนดการ",
-                    category="การสมัคร",
+                    category_id=cat_by_name["ขั้นตอนการกู้ยืม"].id,
+                    keywords="รายเก่า, ต่อสัญญา, กยศ Connect",
                     order_num=4,
                     is_active=True
                 ),
@@ -81,27 +100,27 @@ def seed_database():
             db.add_all(sample_faqs)
             print("[OK] Seeded sample FAQs")
 
-        # 4. Seed Announcements
+        # 5. Seed Announcements
         if db.query(Announcement).count() == 0:
             sample_announcements = [
                 Announcement(
                     title="เปิดระบบผู้กู้ยืม กยศ. ภาคเรียนที่ 1/2569",
                     content="กองทุนเงินให้กู้ยืมเพื่อการศึกษาเปิดรับการลงทะเบียนสำหรับภาคเรียนที่ 1/2569 นักศึกษาที่ประสงค์จะกู้ยืมสามารถยื่นเอกสารได้ตามขั้นตอน",
-                    category="การกู้ยืม",
+                    category_id=cat_by_name["ขั้นตอนการกู้ยืม"].id,
                     academic_year="2569",
                     is_published=True
                 ),
                 Announcement(
                     title="กำหนดการส่งเอกสารประกอบการกู้ยืม ภาคเรียนที่ 1/2569",
                     content="ขอให้นักศึกษาส่งเอกสารประกอบการกู้ยืมภายในกำหนดการ หากพ้นกำหนดจะถือว่าสละสิทธิ์",
-                    category="เอกสาร",
+                    category_id=cat_by_name["เอกสารที่ใช้"].id,
                     academic_year="2569",
                     is_published=True
                 ),
                 Announcement(
                     title="การอบรมจิตอาสา ประจำปีการศึกษา 2569",
                     content="กำหนดการอบรมและทำกิจกรรมจิตอาสาประจำปีการศึกษา 2569 สำหรับผู้กู้ยืมเงิน กยศ. ทุกคน",
-                    category="จิตอาสา",
+                    category_id=cat_by_name["จิตอาสา"].id,
                     academic_year="2569",
                     is_published=True
                 ),

@@ -1,9 +1,9 @@
-import os
 import logging
-from typing import Optional, Tuple, List, Dict, Any
+from typing import Optional, Dict, Any
+from sqlalchemy.orm import Session
 from app.core.config import settings
-from .rag_engine import create_vector_db, create_gemini, ask_rag
-from .pdf_loader import load_pdfs_from_directory
+from .rag_engine import split_into_chunks, get_embeddings_model, create_gemini, ask_rag
+from .pdf_loader import load_single_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +12,6 @@ class RAGService:
     _instance: Optional["RAGService"] = None
 
     def __init__(self):
-        self.db = None
         self.client = None
         self.embeddings = None
         self.is_initialized = False
@@ -24,11 +23,10 @@ class RAGService:
         return cls._instance
 
     def initialize(self):
-        """Initializes Gemini client and loads or creates FAISS index."""
+        """Initializes the Gemini client. The embeddings model loads lazily on first use."""
         if self.is_initialized:
             return
 
-        # 1. Initialize Gemini client
         api_key = settings.GEMINI_API_KEY
         if api_key:
             try:
@@ -37,67 +35,92 @@ class RAGService:
             except Exception as e:
                 logger.error(f"❌ Failed to initialize Gemini Client: {e}")
 
-        # 2. Load FAISS index or create from documents in UPLOAD_DIR
-        try:
-            self._load_or_build_index()
-        except Exception as e:
-            logger.warning(f"⚠️ Vector DB initialization deferred: {e}")
-
         self.is_initialized = True
 
-    def _load_or_build_index(self):
-        index_dir = settings.FAISS_INDEX_DIR
-        upload_dir = settings.UPLOAD_DIR
+    def _get_embeddings(self):
+        if self.embeddings is None:
+            self.embeddings = get_embeddings_model()
+        return self.embeddings
 
-        # Check if saved index exists
-        if os.path.exists(index_dir) and os.path.exists(os.path.join(index_dir, "index.faiss")):
-            try:
-                from langchain_huggingface import HuggingFaceEmbeddings
-                from langchain_community.vectorstores import FAISS
+    def index_document(self, db: Session, document) -> int:
+        """
+        ประมวลผลไฟล์เอกสาร 1 ไฟล์: แตกเป็น chunk, สร้าง embedding, บันทึกลงตาราง
+        document_chunks ใน database (แทนที่ chunk เดิมของเอกสารนี้ทั้งหมด)
+        """
+        from app.models.document import DocumentChunk
 
-                logger.info(f"Loading existing FAISS index from {index_dir}...")
-                embeddings = HuggingFaceEmbeddings(
-                    model_name="BAAI/bge-m3",
-                    model_kwargs={"device": "cpu"},
-                    encode_kwargs={"normalize_embeddings": True}
-                )
-                self.db = FAISS.load_local(index_dir, embeddings, allow_dangerous_deserialization=True)
-                logger.info("✅ Loaded existing FAISS index successfully.")
-                return
-            except Exception as e:
-                logger.warning(f"Could not load local FAISS index: {e}")
+        if document.file_type != "pdf":
+            # รองรับเฉพาะ PDF ในการทำเวกเตอร์ในตอนนี้
+            return 0
 
-        # Otherwise build index if PDFs exist in upload_dir
-        if os.path.exists(upload_dir):
-            pdf_files = [f for f in os.listdir(upload_dir) if f.lower().endswith(".pdf")]
-            if pdf_files:
-                logger.info(f"Found {len(pdf_files)} PDFs in {upload_dir}. Building new FAISS index...")
-                documents = load_pdfs_from_directory(upload_dir)
-                if documents:
-                    self.db = create_vector_db(documents)
-                    os.makedirs(index_dir, exist_ok=True)
-                    self.db.save_local(index_dir)
-                    logger.info(f"✅ FAISS index saved to {index_dir}")
+        pages = load_single_pdf(document.file_path)
+        if not pages:
+            return 0
 
-    def rebuild_index(self):
-        """Rebuilds the FAISS index from documents in upload_dir."""
-        upload_dir = settings.UPLOAD_DIR
-        index_dir = settings.FAISS_INDEX_DIR
+        chunks = split_into_chunks(pages)
+        if not chunks:
+            return 0
 
-        if not os.path.exists(upload_dir):
-            os.makedirs(upload_dir, exist_ok=True)
+        embeddings_model = self._get_embeddings()
+        vectors = embeddings_model.embed_documents([c.page_content for c in chunks])
 
-        documents = load_pdfs_from_directory(upload_dir)
-        if documents:
-            self.db = create_vector_db(documents)
-            os.makedirs(index_dir, exist_ok=True)
-            self.db.save_local(index_dir)
-            logger.info("✅ FAISS index rebuilt successfully.")
-            return len(documents)
-        return 0
+        # ลบ chunk เดิมของเอกสารนี้ก่อนบันทึกชุดใหม่ (กรณีอัปโหลดซ้ำ/ประมวลผลใหม่)
+        db.query(DocumentChunk).filter(DocumentChunk.document_id == document.id).delete()
 
-    def query(self, question: str) -> Dict[str, Any]:
-        """Queries the RAG engine with a question."""
+        for chunk, vector in zip(chunks, vectors):
+            db.add(DocumentChunk(
+                document_id=document.id,
+                chunk_index=chunk.metadata.get("chunk_id", 0),
+                page_number=chunk.metadata.get("page"),
+                chunk_content=chunk.page_content,
+                chunk_tokens=len(chunk.page_content.split()),
+                embedding=vector,
+            ))
+
+        db.commit()
+        logger.info(f"✅ บันทึก {len(chunks)} chunks พร้อม embedding ลง database สำหรับเอกสาร '{document.original_name}'")
+        return len(chunks)
+
+    def index_announcement(self, db: Session, announcement) -> int:
+        """
+        ประมวลผลประกาศข่าวสาร 1 รายการ (เฉพาะที่เผยแพร่แล้ว): แตกหัวข้อ+เนื้อหาเป็น chunk,
+        สร้าง embedding, บันทึกลงตาราง document_chunks (แทนที่ chunk เดิมของประกาศนี้ทั้งหมด)
+        """
+        from langchain_core.documents import Document as LCDocument
+        from app.models.document import DocumentChunk
+
+        # ลบ chunk เดิมของประกาศนี้ก่อนเสมอ (กรณีแก้ไข/ยกเลิกเผยแพร่)
+        db.query(DocumentChunk).filter(DocumentChunk.announcement_id == announcement.id).delete()
+
+        if not announcement.is_published:
+            db.commit()
+            return 0
+
+        text = f"{announcement.title}\n\n{announcement.content}"
+        pages = [LCDocument(page_content=text, metadata={})]
+        chunks = split_into_chunks(pages)
+        if not chunks:
+            db.commit()
+            return 0
+
+        embeddings_model = self._get_embeddings()
+        vectors = embeddings_model.embed_documents([c.page_content for c in chunks])
+
+        for chunk, vector in zip(chunks, vectors):
+            db.add(DocumentChunk(
+                announcement_id=announcement.id,
+                chunk_index=chunk.metadata.get("chunk_id", 0),
+                chunk_content=chunk.page_content,
+                chunk_tokens=len(chunk.page_content.split()),
+                embedding=vector,
+            ))
+
+        db.commit()
+        logger.info(f"✅ บันทึก {len(chunks)} chunks พร้อม embedding ลง database สำหรับประกาศ '{announcement.title}'")
+        return len(chunks)
+
+    def query(self, db: Session, question: str) -> Dict[str, Any]:
+        """Queries the RAG engine with a question, retrieving context from document_chunks in the database."""
         if not self.client and settings.GEMINI_API_KEY:
             self.client = create_gemini(settings.GEMINI_API_KEY)
 
@@ -108,7 +131,8 @@ class RAGService:
             }
 
         return ask_rag(
-            db=self.db,
+            session=db,
+            embeddings_model=self._get_embeddings(),
             client=self.client,
             question=question
         )

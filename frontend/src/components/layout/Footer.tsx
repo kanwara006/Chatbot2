@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Phone, Mail, MapPin, ExternalLink } from 'lucide-react'
+import Logo from '@/components/common/Logo'
 
 // ── Footer Links ────────────────────────────────────────────────────
 const mainLinks = [
@@ -24,22 +25,7 @@ export default function Footer() {
           {/* Col 1: System Info & Description (Span 4) */}
           <div className="lg:col-span-4 flex flex-col items-start">
             <Link to="/" className="flex items-center gap-3 mb-4 group" aria-label="PSU SLF AI หน้าแรก">
-              <div className="w-10 h-10 flex-shrink-0">
-                <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="44" height="44" rx="10" fill="rgba(255,255,255,0.15)"/>
-                  <text
-                    x="22" y="28"
-                    textAnchor="middle"
-                    fill="white"
-                    fontSize="16"
-                    fontWeight="700"
-                    fontFamily="IBM Plex Sans Thai, sans-serif"
-                    letterSpacing="-0.5"
-                  >
-                    PSU
-                  </text>
-                </svg>
-              </div>
+              <Logo size={40} />
               <div className="leading-tight">
                 <p className="text-white text-sm font-bold tracking-tight">
                   มหาวิทยาลัยสงขลานครินทร์

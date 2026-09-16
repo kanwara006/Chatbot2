@@ -9,7 +9,6 @@ class MessageSourceResponse(BaseModel):
     filename: str
     page_number: Optional[str] = None
     page: Optional[str] = None
-    chunk_content: Optional[str] = ""
     similarity_score: Optional[str] = None
 
     @model_validator(mode="before")

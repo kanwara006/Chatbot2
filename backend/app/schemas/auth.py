@@ -9,6 +9,8 @@ class Token(BaseModel):
     role: str
     first_name: str
     last_name: str
+    email: str
+    student_id: Optional[str] = None
 
 
 class TokenPayload(BaseModel):
@@ -18,3 +20,11 @@ class TokenPayload(BaseModel):
 class LoginRequest(BaseModel):
     username_or_email: str
     password: str
+
+
+class AdminRegisterRequest(BaseModel):
+    first_name: str
+    last_name: str
+    email: EmailStr
+    password: str
+    staff_code: str

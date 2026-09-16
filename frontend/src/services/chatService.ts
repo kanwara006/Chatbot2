@@ -1,68 +1,105 @@
 import axios from 'axios'
-import type { MessageSource, Conversation } from '@/types'
+import type { Message, MessageSource, Conversation } from '@/types'
+import { API_BASE_URL, getAuthHeader, getStoredAuth } from '@/services/authService'
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api/v1'
+function mapSources(raw: any[]): MessageSource[] {
+  return (raw || []).map((src: any, index: number) => ({
+    documentId: src.document_id ?? index + 1,
+    filename: src.filename || 'เอกสารอ้างอิง.pdf',
+    page: src.page || src.page_number || undefined,
+    similarity: src.similarity_score ? parseFloat(src.similarity_score) : undefined,
+  }))
+}
 
-const STORAGE_KEY = 'psu_slf_conversations'
+function mapMessage(raw: any): Message {
+  return {
+    id: raw.id,
+    conversationId: raw.conversation_id,
+    role: raw.role,
+    content: raw.content,
+    sources: mapSources(raw.sources),
+    createdAt: raw.created_at,
+  }
+}
 
-
-
-export async function simulateAIResponse(question: string): Promise<{
-  answer: string
-  sources: MessageSource[]
-}> {
+export async function sendChatMessage(
+  message: string,
+  conversationId: number | null
+): Promise<Message> {
   try {
-    const response = await axios.post(`${API_BASE_URL}/chat/message`, {
-      message: question,
-    })
-
-    const data = response.data
-    const sources: MessageSource[] = (data.sources || []).map((src: any, index: number) => ({
-      documentId: src.id || index + 1,
-      filename: src.filename || 'เอกสารอ้างอิง.pdf',
-      chunkContent: src.chunk_content || '',
-      page: src.page || src.page_number || undefined,
-      similarity: src.similarity_score ? parseFloat(src.similarity_score) : undefined,
-    }))
-
-    return {
-      answer: data.content || data.answer || 'ขออภัย ไม่พบคำตอบ',
-      sources,
-    }
+    const response = await axios.post(
+      `${API_BASE_URL}/chat/message`,
+      { message, conversation_id: conversationId },
+      { headers: getAuthHeader() }
+    )
+    return mapMessage(response.data)
   } catch (error) {
-    console.error('Error calling backend RAG API:', error)
+    console.error('Error calling backend chat API:', error)
     return {
-      answer: 'ขออภัย ระบบขัดข้องชั่วคราว ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ RAG ได้ กรุณาลองใหม่อีกครั้ง',
+      id: Date.now(),
+      conversationId: conversationId ?? 0,
+      role: 'assistant',
+      content: 'ขออภัย ระบบขัดข้องชั่วคราว ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง',
       sources: [],
+      createdAt: new Date().toISOString(),
     }
   }
 }
 
-// ── Conversation Storage ─────────────────────────────────────────────
-
-export function getStoredConversations(): Conversation[] {
+export async function fetchConversations(): Promise<Conversation[]> {
+  if (!getStoredAuth()) return []
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
+    const response = await axios.get(`${API_BASE_URL}/chat/conversations`, {
+      headers: getAuthHeader(),
+    })
+    return (response.data || []).map((c: any) => ({
+      id: c.id,
+      userId: c.user_id,
+      title: c.title,
+      createdAt: c.created_at,
+      updatedAt: c.updated_at,
+    }))
+  } catch (error) {
+    console.error('Error fetching conversations:', error)
     return []
   }
 }
 
-export function saveConversation(conv: Conversation): void {
-  const convs = getStoredConversations()
-  const idx = convs.findIndex((c) => c.id === conv.id)
-  if (idx >= 0) {
-    convs[idx] = conv
-  } else {
-    convs.unshift(conv)
+export async function fetchConversationMessages(id: number): Promise<Message[]> {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/chat/conversations/${id}`, {
+      headers: getAuthHeader(),
+    })
+    return (response.data.messages || []).map(mapMessage)
+  } catch (error) {
+    console.error('Error fetching conversation detail:', error)
+    return []
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(convs))
 }
 
-export function deleteConversation(id: number): void {
-  const convs = getStoredConversations().filter((c) => c.id !== id)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(convs))
+export async function deleteConversationRemote(id: number): Promise<void> {
+  try {
+    await axios.delete(`${API_BASE_URL}/chat/conversations/${id}`, {
+      headers: getAuthHeader(),
+    })
+  } catch (error) {
+    console.error('Error deleting conversation:', error)
+  }
+}
+
+export async function submitMessageFeedback(
+  messageId: number,
+  rating: 'like' | 'dislike'
+): Promise<void> {
+  try {
+    await axios.post(
+      `${API_BASE_URL}/chat/feedback/${messageId}`,
+      { rating },
+      { headers: getAuthHeader() }
+    )
+  } catch (error) {
+    console.error('Error submitting feedback:', error)
+  }
 }
 
 export function generateId(): number {

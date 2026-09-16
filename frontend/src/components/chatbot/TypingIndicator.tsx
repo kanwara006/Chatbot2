@@ -1,3 +1,6 @@
+import { motion } from 'framer-motion'
+import Logo from '@/components/common/Logo'
+
 /**
  * TypingIndicator — แสดง animation ขณะ AI กำลังตอบ
  *
@@ -5,14 +8,19 @@
  */
 export default function TypingIndicator() {
   return (
-    <div className="flex items-start gap-3 px-4 py-2">
+    <motion.div
+      className="flex items-start gap-3 px-4 sm:px-6 py-2"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+    >
       {/* AI Avatar */}
       <div
-        className="flex-shrink-0 flex items-center justify-center rounded-full text-white text-xs font-bold"
-        style={{ width: 32, height: 32, background: '#1E5AA8', marginTop: 2 }}
+        className="flex-shrink-0 flex items-center justify-center rounded-xl p-1"
+        style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #E5EDFF, #DBEAFE)' }}
         aria-hidden="true"
       >
-        AI
+        <Logo size={22} />
       </div>
 
       {/* Bubble */}
@@ -20,9 +28,9 @@ export default function TypingIndicator() {
         className="flex items-center gap-3 rounded-2xl px-4 py-3"
         style={{
           background:    '#fff',
-          border:        '1px solid #E2E8F0',
-          boxShadow:     '0 1px 4px rgba(0,0,0,0.05)',
-          borderRadius:  '4px 18px 18px 18px',
+          border:        '1px solid #EDF2F7',
+          boxShadow:     '0 1px 2px rgba(6,46,102,0.04), 0 8px 20px rgba(6,46,102,0.08), 0 1px 0 rgba(255,255,255,0.6) inset',
+          borderRadius:  '6px 18px 18px 18px',
         }}
         role="status"
         aria-label="AI กำลังประมวลผล"
@@ -36,13 +44,13 @@ export default function TypingIndicator() {
               style={{
                 width:           7,
                 height:          7,
-                background:      '#94A3B8',
+                background:      '#1E5AA8',
                 animation:       `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
               }}
             />
           ))}
         </div>
-        <span className="text-xs text-[#94A3B8]">
+        <span className="text-xs text-[#64748B]">
           AI กำลังตรวจสอบข้อมูลจากเอกสาร กยศ.
         </span>
       </div>
@@ -53,6 +61,6 @@ export default function TypingIndicator() {
           40%            { transform: translateY(-5px); opacity: 1; }
         }
       `}</style>
-    </div>
+    </motion.div>
   )
 }

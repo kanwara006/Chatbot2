@@ -1,8 +1,11 @@
 import ReactMarkdown from 'react-markdown'
-import { User, FileText } from 'lucide-react'
+import remarkGfm from 'remark-gfm'
+import { motion } from 'framer-motion'
+import { User } from 'lucide-react'
 import type { Message } from '@/types'
 import SourceCitation from './SourceCitation'
 import MessageActions from './MessageActions'
+import Logo from '@/components/common/Logo'
 
 interface ChatMessageProps {
   message:    Message
@@ -29,15 +32,21 @@ export default function ChatMessage({ message, onFeedback }: ChatMessageProps) {
   // ── User Message ──────────────────────────────────────────────────
   if (isUser) {
     return (
-      <div className="flex flex-col items-end px-4 sm:px-6 py-2 animate-fade-in">
+      <motion.div
+        className="flex flex-col items-end px-4 sm:px-6 py-2"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+      >
         <div className="flex items-start gap-2.5 max-w-[85%] sm:max-w-[75%]">
           {/* User Bubble */}
           <div
-            className="rounded-2xl px-5 py-3 text-sm leading-relaxed text-white shadow-sm"
+            className="rounded-2xl px-5 py-3 text-sm leading-relaxed text-white"
             style={{
-              background: '#0B4DBA',
-              borderRadius: '20px 4px 20px 20px',
+              background: 'linear-gradient(135deg, #0B4DBA, #1E5AA8)',
+              borderRadius: '22px 6px 22px 22px',
               whiteSpace: 'pre-wrap',
+              boxShadow: '0 2px 4px rgba(11,77,186,0.15), 0 10px 24px rgba(11,77,186,0.25)',
             }}
           >
             {message.content}
@@ -45,7 +54,8 @@ export default function ChatMessage({ message, onFeedback }: ChatMessageProps) {
 
           {/* User Avatar (on right) */}
           <div
-            className="w-8 h-8 rounded-full bg-[#062E66] text-white flex items-center justify-center flex-shrink-0 mt-0.5"
+            className="w-8 h-8 rounded-full text-white flex items-center justify-center flex-shrink-0 mt-0.5"
+            style={{ background: 'linear-gradient(135deg, #062E66, #0B4DBA)' }}
             aria-label="User"
           >
             <User size={16} />
@@ -56,31 +66,51 @@ export default function ChatMessage({ message, onFeedback }: ChatMessageProps) {
         <span className="text-[11px] text-[#94A3B8] mt-1 mr-11">
           {timeStr}
         </span>
-      </div>
+      </motion.div>
     )
   }
 
   // ── AI Message ────────────────────────────────────────────────────
   return (
-    <div className="flex items-start gap-3 px-4 sm:px-6 py-3 animate-fade-in max-w-[95%] sm:max-w-[85%]">
-      {/* AI Avatar (Purple/Indigo Rounded Box on left) */}
+    <motion.div
+      className="flex items-start gap-3 px-4 sm:px-6 py-3 max-w-[95%] sm:max-w-[85%]"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+    >
+      {/* AI Avatar — โลโก้มาสคอตของแชทบอท */}
       <div
-        className="w-8 h-8 rounded-xl bg-[#5850EC] text-white flex items-center justify-center flex-shrink-0 mt-1 shadow-sm"
+        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 p-1"
+        style={{ background: 'linear-gradient(135deg, #E5EDFF, #DBEAFE)', boxShadow: '0 2px 8px rgba(11,77,186,0.12)' }}
         aria-label="AI Assistant"
       >
-        <FileText size={16} />
+        <Logo size={26} />
       </div>
 
       {/* Bubble Container */}
       <div className="flex-1 min-w-0">
         <div
-          className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E2E8F0] shadow-[0_2px_10px_rgba(0,0,0,0.03)] text-sm leading-relaxed text-[#1E293B]"
-          style={{ borderRadius: '4px 20px 20px 20px' }}
+          className="bg-white p-5 sm:p-6 border border-[#EDF2F7] text-sm leading-relaxed text-[#1E293B]"
+          style={{
+            borderRadius: '6px 22px 22px 22px',
+            boxShadow: '0 1px 2px rgba(6,46,102,0.04), 0 10px 24px rgba(6,46,102,0.08), 0 1px 0 rgba(255,255,255,0.6) inset',
+          }}
         >
           {/* Markdown Content */}
           <div className="prose prose-sm max-w-none text-[#1E293B]">
             <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
               components={{
+                a: ({ children, href }) => (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0B4DBA] underline decoration-[#0B4DBA]/40 hover:decoration-[#0B4DBA] break-all"
+                  >
+                    {children}
+                  </a>
+                ),
                 h2: ({ children }) => (
                   <h2 className="text-base font-bold text-[#062E66] mt-4 mb-2 first:mt-0">
                     {children}
@@ -137,6 +167,6 @@ export default function ChatMessage({ message, onFeedback }: ChatMessageProps) {
           onFeedback={onFeedback}
         />
       </div>
-    </div>
+    </motion.div>
   )
 }

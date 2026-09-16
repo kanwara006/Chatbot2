@@ -3,6 +3,8 @@ import { Phone, Mail, MapPin, Send } from 'lucide-react'
 import PageLayout from '@/components/layout/PageLayout'
 import campusImage from '@/assets/images/psu-campus.jpg'
 import toast from 'react-hot-toast'
+import { submitContactMessage } from '@/services/contactService'
+import { extractErrorMessage } from '@/services/authService'
 
 /**
  * ContactPage — Matched with Figma Contact Screen Reference
@@ -25,10 +27,21 @@ export default function ContactPage() {
     }
 
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 800))
-    setLoading(false)
-    toast.success('ส่งข้อความเรียบร้อยแล้ว เจ้าหน้าที่จะติดต่อกลับโดยเร็วที่สุด')
-    setForm({ fullName: '', studentId: '', email: '', subject: '', message: '' })
+    try {
+      await submitContactMessage({
+        full_name: form.fullName,
+        student_id: form.studentId || undefined,
+        email: form.email,
+        subject: form.subject || undefined,
+        message: form.message,
+      })
+      toast.success('ส่งข้อความเรียบร้อยแล้ว เจ้าหน้าที่จะติดต่อกลับโดยเร็วที่สุด')
+      setForm({ fullName: '', studentId: '', email: '', subject: '', message: '' })
+    } catch (err) {
+      toast.error(extractErrorMessage(err, 'ส่งข้อความไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -238,8 +251,8 @@ export default function ContactPage() {
             </h2>
             <div className="w-full h-80 rounded-xl overflow-hidden border border-[#DDE2EA] relative bg-[#EDF2F7]">
               <iframe
-                title="PSU Surat Thani Campus Map"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3946.046399434407!2d99.30829871146747!3d9.141753089455325!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3054060e20689b91%3A0xbcae0d1d61d6da7c!2sPrince%20of%20Songkla%20University%2C%20Surat%20Thani%20Campus!5e0!3m2!1sen!2sth!4v1700000000000!5m2!1sen!2sth"
+                title="งานพัฒนานักศึกษาและศิษย์เก่าสัมพันธ์ มหาวิทยาลัยสงขลานครินทร์ วิทยาเขตสุราษฎร์ธานี"
+                src="https://www.google.com/maps?q=%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%9E%E0%B8%B1%E0%B8%92%E0%B8%99%E0%B8%B2%E0%B8%99%E0%B8%B1%E0%B8%81%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%A8%E0%B8%B4%E0%B8%A9%E0%B8%A2%E0%B9%8C%E0%B9%80%E0%B8%81%E0%B9%88%E0%B8%B2%E0%B8%AA%E0%B8%B1%E0%B8%A1%E0%B8%9E%E0%B8%B1%E0%B8%99%E0%B8%98%E0%B9%8C%2031%20Tambon%20Makham%20Tia&output=embed"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}

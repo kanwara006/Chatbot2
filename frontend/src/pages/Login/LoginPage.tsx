@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { User, Lock, Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react'
+import { User, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { extractErrorMessage } from '@/services/authService'
+import { useAuth } from '@/context/AuthContext'
+import AuthSplitLayout from '@/components/auth/AuthSplitLayout'
 
 /**
- * LoginPage — Split View 50/50 Matched with Figma Login Reference
+ * LoginPage — เข้าสู่ระบบนักศึกษา (โครงสร้างการ์ดลอยทับ ตาม AuthSplitLayout)
  */
 export default function LoginPage() {
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const [form, setForm] = useState({ username: '', password: '', rememberMe: false })
   const [showPass, setShowPass] = useState(false)
@@ -23,74 +27,24 @@ export default function LoginPage() {
     }
 
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 600))
-    setLoading(false)
-    navigate('/chat')
+    try {
+      await login(form.username, form.password)
+      navigate('/')
+    } catch (err) {
+      setError(extractErrorMessage(err, 'เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบข้อมูล'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
-      {/* ── Left Column: Deep Navy Branding (50%) ─────────────────── */}
-      <div className="lg:w-1/2 bg-[#062E66] text-white p-8 sm:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden">
-        {/* Background Subtle Watermark Circles */}
-        <div
-          className="absolute -right-24 -bottom-24 w-96 h-96 rounded-full opacity-10 pointer-events-none border-[40px] border-white"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute right-12 bottom-12 w-64 h-64 rounded-full opacity-5 pointer-events-none border-[20px] border-white"
-          aria-hidden="true"
-        />
-
-        {/* Top: PSU Branding */}
-        <div className="relative z-10">
-          <Link to="/" className="inline-flex items-center gap-3 group" aria-label="กลับสู่หน้าหลัก">
-            <div className="w-10 h-10 flex-shrink-0">
-              <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="44" height="44" rx="8" fill="rgba(255,255,255,0.15)"/>
-                <text
-                  x="22" y="28"
-                  textAnchor="middle"
-                  fill="white"
-                  fontSize="16"
-                  fontWeight="700"
-                  fontFamily="IBM Plex Sans Thai, sans-serif"
-                  letterSpacing="-0.5"
-                >
-                  PSU
-                </text>
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-white tracking-tight leading-tight">มหาวิทยาลัยสงขลานครินทร์</p>
-              <p className="text-xs text-white/70">วิทยาเขตสุราษฎร์ธานี</p>
-            </div>
-          </Link>
-        </div>
-
-        {/* Center: Main Headline */}
-        <div className="relative z-10 my-10 lg:my-0 max-w-lg">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight mb-4">
-            ยินดีต้อนรับสู่ระบบ<br />
-            <span className="text-[#93C5FD]">PSU SLF AI</span>
-          </h1>
-          <p className="text-white/80 text-xs sm:text-sm leading-relaxed">
-            ระบบผู้ช่วยอัจฉริยะสำหรับกองทุนเงินให้กู้ยืมเพื่อการศึกษา มหาวิทยาลัยสงขลานครินทร์ เข้าถึงข้อมูลง่าย จัดการสะดวก รวดเร็วและปลอดภัย
-          </p>
-        </div>
-
-        {/* Bottom: Security Badge */}
-        <div className="relative z-10 flex items-center gap-2.5 text-xs text-white/70 pt-4 border-t border-white/10">
-          <ShieldCheck size={18} className="text-[#60A5FA] flex-shrink-0" />
-          <span>ระบบมีความปลอดภัยระดับสูงตามมาตรฐานสากล</span>
-        </div>
-      </div>
-
-      {/* ── Right Column: Login Form (50%) ────────────────────────── */}
-      <div className="lg:w-1/2 bg-[#F7F8FA] p-6 sm:p-12 lg:p-16 flex items-center justify-center">
-        <div className="w-full max-w-md bg-white rounded-2xl p-7 sm:p-9 border border-[#DDE2EA] shadow-[0_4px_24px_rgba(6,46,102,0.06)]">
+    <AuthSplitLayout
+      headline={<>ยินดีต้อนรับสู่ระบบ<br /><span className="text-[#93C5FD]">PSU SLF AI</span></>}
+      description="ระบบผู้ช่วยอัจฉริยะสำหรับกองทุนเงินให้กู้ยืมเพื่อการศึกษา มหาวิทยาลัยสงขลานครินทร์ เข้าถึงข้อมูลง่าย จัดการสะดวก รวดเร็วและปลอดภัย"
+    >
+      <div>
           {/* Header */}
-          <div className="mb-7">
+          <div className="mb-7 text-center">
             <h2 className="text-2xl font-bold text-[#062E66] mb-1">
               เข้าสู่ระบบ
             </h2>
@@ -196,8 +150,7 @@ export default function LoginPage() {
               สมัครสมาชิก
             </Link>
           </div>
-        </div>
       </div>
-    </div>
+    </AuthSplitLayout>
   )
 }

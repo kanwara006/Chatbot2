@@ -53,7 +53,7 @@ export default function HeroSection() {
           {/* English Title */}
           <motion.h1
             className="text-white font-bold leading-tight mb-3"
-            style={{ fontSize: 'clamp(28px, 4.5vw, 46px)', letterSpacing: '-0.02em' }}
+            style={{ fontSize: 'clamp(19px, 5.6vw, 46px)', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.2 }}

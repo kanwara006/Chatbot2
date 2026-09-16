@@ -1,86 +1,72 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Search, CalendarDays, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import PageLayout from '@/components/layout/PageLayout'
 import campusImage from '@/assets/images/psu-campus.jpg'
+import type { Announcement } from '@/types'
+import { fetchAnnouncements, resolveAnnouncementImageUrl } from '@/services/announcementService'
+import { fetchCategories, type Category } from '@/services/categoryService'
+import { formatThaiDate } from '@/utils/date'
+import AnnouncementModal from '@/components/announcements/AnnouncementModal'
 
-// ── Announcement Data ────────────────────────────────────────────────
-const announcementsData = [
-  {
-    id: 1,
-    title: 'เปิดรับคำขอกู้ยืมเงิน กยศ. ภาคเรียนที่ 1/2569',
-    category: 'ประกาศสำคัญ',
-    badgeType: 'important',
-    date: '15 พฤษภาคม 2569',
-    excerpt: 'เปิดระบบให้นักศึกษาที่ประสงค์จะกู้ยืมเงิน กยศ. ภาคเรียนที่ 1/2569 ทั้งผู้กู้รายใหม่และผู้กู้รายเก่า ดำเนินการผ่านระบบ กยศ. Connect ได้ตั้งแต่วันนี้เป็นต้นไป',
-    imageGradient: 'linear-gradient(135deg, #062E66 0%, #0B4DBA 100%)',
-  },
-  {
-    id: 2,
-    title: 'กำหนดการส่งเอกสารประกอบการกู้ยืม ภาคเรียนที่ 1/2569',
-    category: 'กำหนดการ',
-    badgeType: 'schedule',
-    date: '10 พฤษภาคม 2569',
-    excerpt: 'ขอให้นักศึกษานำส่งเอกสารประกอบการกู้ยืม กยศ. ภาคเรียนที่ 1/2569 ที่งานกองทุนฯ ตามวันและเวลาที่กำหนดในประกาศ เพื่อความสะดวกรวดเร็วในการตรวจสอบ',
-    imageGradient: 'linear-gradient(135deg, #0B4DBA 0%, #3B82F6 100%)',
-  },
-  {
-    id: 3,
-    title: 'การเข้าร่วมโครงการจิตอาสาเพื่อสะสมชั่วโมง กยศ. ประจำปี 2569',
-    category: 'ข่าวกิจกรรม',
-    badgeType: 'activity',
-    date: '2 พฤษภาคม 2569',
-    excerpt: 'กำหนดการจัดอบรมและทำกิจกรรมจิตอาสาเพื่อสะสมชั่วโมงจิตอาสาให้ครบ 36 ชั่วโมง สำหรับผู้กู้ยืมเงิน กยศ. ทุกคน ตามระเบียบที่กองทุนกำหนด',
-    imageGradient: 'linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%)',
-  },
-  {
-    id: 4,
-    title: 'ประกาศรายชื่อผู้ผ่านการอนุมัติให้กู้ยืมเงิน กยศ. รอบที่ 1',
-    category: 'ประกาศสำคัญ',
-    badgeType: 'important',
-    date: '28 เมษายน 2569',
-    excerpt: 'ขอให้นักศึกษาที่มีรายชื่อผ่านการอนุมัติดำเนินการตรวจสอบยอดเงินและลงนามในสัญญากู้ยืมเงินผ่านระบบให้แล้วเสร็จภายในเวลาที่กำหนด',
-    imageGradient: 'linear-gradient(135deg, #062E66 0%, #1E40AF 100%)',
-  },
-  {
-    id: 5,
-    title: 'แนวปฏิบัติการบันทึกสัญญากู้ยืมเงินในระบบ กยศ. Connect',
-    category: 'กำหนดการ',
-    badgeType: 'schedule',
-    date: '20 เมษายน 2569',
-    excerpt: 'ขั้นตอนและแนวทางปฏิบัติสำหรับนักศึกษาในการจัดทำสัญญากู้ยืมเงินอิเล็กทรอนิกส์ พร้อมคู่มือการใช้งานระบบอย่างละเอียด',
-    imageGradient: 'linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%)',
-  },
-  {
-    id: 6,
-    title: 'กิจกรรมแนะแนวการกู้ยืมเพื่อการศึกษาสำหรับนักศึกษาใหม่',
-    category: 'ข่าวกิจกรรม',
-    badgeType: 'activity',
-    date: '15 เมษายน 2569',
-    excerpt: 'งานกองทุนฯ จัดกิจกรรมแนะแนวและให้คำปรึกษาขั้นตอนการกู้ยืมเงิน กยศ. แก่นักศึกษาชั้นปีที่ 1 ณ หอประชุมวิทยาเขตสุราษฎร์ธานี',
-    imageGradient: 'linear-gradient(135deg, #0B4DBA 0%, #60A5FA 100%)',
-  },
+const GRADIENTS = [
+  'linear-gradient(135deg, #062E66 0%, #0B4DBA 100%)',
+  'linear-gradient(135deg, #0B4DBA 0%, #3B82F6 100%)',
+  'linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%)',
+  'linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%)',
+  'linear-gradient(135deg, #0B4DBA 0%, #60A5FA 100%)',
 ]
+const BADGE_COLORS = ['bg-[#EF4444] text-white', 'bg-[#3B82F6] text-white', 'bg-[#10B981] text-white', 'bg-[#7C3AED] text-white']
 
-const categories = ['ทั้งหมด', 'ประกาศสำคัญ', 'กำหนดการ', 'ข่าวกิจกรรม']
+const PAGE_SIZE = 6
 
 /**
  * AnnouncementsPage — Matched with Figma News Screen Reference
  */
 export default function AnnouncementsPage() {
+  const [items, setItems] = useState<Announcement[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [activeCategory, setActiveCategory] = useState('ทั้งหมด')
+  const [activeCategory, setActiveCategory] = useState<number | 'all'>('all')
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedItem, setSelectedItem] = useState<Announcement | null>(null)
+
+  useEffect(() => {
+    Promise.all([fetchAnnouncements(), fetchCategories()])
+      .then(([announcements, cats]) => {
+        setItems(announcements)
+        setCategories(cats)
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  const categoryStyle = (categoryId?: number) => {
+    const idx = categories.findIndex((c) => c.id === categoryId)
+    const safeIdx = idx === -1 ? categories.length : idx
+    return {
+      badge: BADGE_COLORS[safeIdx % BADGE_COLORS.length],
+      gradient: GRADIENTS[safeIdx % GRADIENTS.length],
+    }
+  }
+  const categoryName = (categoryId?: number) => categories.find((c) => c.id === categoryId)?.name || 'ทั่วไป'
 
   const filteredNews = useMemo(() => {
-    return announcementsData.filter((item) => {
+    return items.filter((item) => {
       const matchSearch =
         !search ||
         item.title.toLowerCase().includes(search.toLowerCase()) ||
-        item.excerpt.toLowerCase().includes(search.toLowerCase())
+        item.content.toLowerCase().includes(search.toLowerCase())
       const matchCategory =
-        activeCategory === 'ทั้งหมด' || item.category === activeCategory
+        activeCategory === 'all' || item.categoryId === activeCategory
       return matchSearch && matchCategory
     })
+  }, [search, activeCategory, items])
+
+  const totalPages = Math.max(1, Math.ceil(filteredNews.length / PAGE_SIZE))
+  const pagedNews = filteredNews.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+  useEffect(() => {
+    setCurrentPage(1)
   }, [search, activeCategory])
 
   return (
@@ -129,12 +115,24 @@ export default function AnnouncementsPage() {
 
             {/* Category Filter Chips */}
             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              <button
+                onClick={() => setActiveCategory('all')}
+                className={`
+                  px-4 py-2 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer
+                  ${activeCategory === 'all'
+                    ? 'bg-[#0B4DBA] text-white shadow-[0_2px_8px_rgba(11,77,186,0.25)]'
+                    : 'bg-[#F7F8FA] text-[#5F6673] hover:bg-[#E5EDFF] hover:text-[#0B4DBA] border border-[#DDE2EA]'
+                  }
+                `}
+              >
+                ทั้งหมด
+              </button>
               {categories.map((cat) => {
-                const isActive = activeCategory === cat
+                const isActive = activeCategory === cat.id
                 return (
                   <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
                     className={`
                       px-4 py-2 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer
                       ${isActive
@@ -143,7 +141,7 @@ export default function AnnouncementsPage() {
                       }
                     `}
                   >
-                    {cat}
+                    {cat.name}
                   </button>
                 )
               })}
@@ -155,106 +153,128 @@ export default function AnnouncementsPage() {
       {/* ── 3. News Grid (3 Columns) ──────────────────────────────── */}
       <section className="section-sm">
         <div className="container-main">
-          {filteredNews.length === 0 ? (
+          {loading ? (
+            <div className="bg-white rounded-2xl p-12 text-center border border-[#DDE2EA]">
+              <p className="text-[#5F6673] text-sm">กำลังโหลดข้อมูล...</p>
+            </div>
+          ) : filteredNews.length === 0 ? (
             <div className="bg-white rounded-2xl p-12 text-center border border-[#DDE2EA]">
               <p className="text-[#5F6673] text-sm">ไม่พบข่าวสารหรือประกาศที่ตรงกับเงื่อนไขการค้นหา</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredNews.map((item) => (
-                <article
-                  key={item.id}
-                  className="card group flex flex-col overflow-hidden bg-white hover:-translate-y-1 transition-transform duration-200"
-                >
-                  {/* Card Thumbnail Top Banner */}
-                  <div
-                    className="h-40 w-full relative flex items-end p-4 text-white"
-                    style={{ background: item.imageGradient }}
+              {pagedNews.map((item) => {
+                const style = categoryStyle(item.categoryId)
+                const imageUrl = resolveAnnouncementImageUrl(item.attachmentUrl)
+                return (
+                  <article
+                    key={item.id}
+                    onClick={() => setSelectedItem(item)}
+                    className="card group flex flex-col overflow-hidden bg-white hover:-translate-y-1 transition-transform duration-200 cursor-pointer text-left"
                   >
-                    <div className="absolute top-4 left-4">
-                      <span
-                        className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
-                          item.badgeType === 'important'
-                            ? 'bg-[#EF4444] text-white'
-                            : item.badgeType === 'schedule'
-                            ? 'bg-[#3B82F6] text-white'
-                            : 'bg-[#10B981] text-white'
-                        }`}
-                      >
-                        {item.category}
-                      </span>
+                    {/* Card Thumbnail Top Banner */}
+                    <div
+                      className="h-40 w-full relative flex items-end p-4 text-white"
+                      style={imageUrl ? undefined : { background: style.gradient }}
+                    >
+                      {imageUrl && (
+                        <>
+                          <img
+                            src={imageUrl}
+                            alt={item.title}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                          <div
+                            className="absolute inset-0"
+                            style={{ background: 'linear-gradient(180deg, rgba(6,46,102,0) 55%, rgba(6,46,102,0.55) 100%)' }}
+                          />
+                        </>
+                      )}
+                      <div className="absolute top-4 left-4">
+                        <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${style.badge}`}>
+                          {categoryName(item.categoryId)}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Card Body */}
-                  <div className="p-5 sm:p-6 flex-1 flex flex-col">
-                    {/* Date */}
-                    <div className="flex items-center gap-1.5 text-xs text-[#94A3B8] mb-2 font-medium">
-                      <CalendarDays size={13} />
-                      <span>{item.date}</span>
+                    {/* Card Body */}
+                    <div className="p-5 sm:p-6 flex-1 flex flex-col">
+                      {/* Date */}
+                      <div className="flex items-center gap-1.5 text-xs text-[#94A3B8] mb-2 font-medium">
+                        <CalendarDays size={13} />
+                        <span>{formatThaiDate(item.eventDate || item.publishedAt)}</span>
+                      </div>
+
+                      {/* Title */}
+                      <h2 className="font-bold text-base text-[#111827] group-hover:text-[#0B4DBA] transition-colors leading-snug mb-2 line-clamp-2">
+                        {item.title}
+                      </h2>
+
+                      {/* Excerpt */}
+                      <p className="text-xs sm:text-[13px] text-[#5F6673] leading-relaxed line-clamp-3 mb-5 flex-1">
+                        {item.content}
+                      </p>
+
+                      {/* Footer link */}
+                      <div className="pt-3 border-t border-[#EDF2F7] mt-auto">
+                        <span className="text-xs font-semibold text-[#0B4DBA] group-hover:text-[#062E66] inline-flex items-center gap-1.5 transition-colors">
+                          <span>อ่านเพิ่มเติม</span>
+                          <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+                        </span>
+                      </div>
                     </div>
-
-                    {/* Title */}
-                    <h2 className="font-bold text-base text-[#111827] group-hover:text-[#0B4DBA] transition-colors leading-snug mb-2 line-clamp-2">
-                      {item.title}
-                    </h2>
-
-                    {/* Excerpt */}
-                    <p className="text-xs sm:text-[13px] text-[#5F6673] leading-relaxed line-clamp-3 mb-5 flex-1">
-                      {item.excerpt}
-                    </p>
-
-                    {/* Footer link */}
-                    <div className="pt-3 border-t border-[#EDF2F7] mt-auto">
-                      <span className="text-xs font-semibold text-[#0B4DBA] group-hover:text-[#062E66] inline-flex items-center gap-1.5 transition-colors">
-                        <span>อ่านเพิ่มเติม</span>
-                        <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
-                      </span>
-                    </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                )
+              })}
             </div>
           )}
 
           {/* ── 4. Pagination (Figma Style) ───────────────────────── */}
-          <div className="flex items-center justify-center gap-2 mt-10">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="w-9 h-9 rounded-full border border-[#DDE2EA] flex items-center justify-center text-[#5F6673] hover:bg-white disabled:opacity-40 transition-colors"
-              aria-label="Previous Page"
-            >
-              <ChevronLeft size={16} />
-            </button>
-
-            {[1, 2, 3].map((page) => (
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-10">
               <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`
-                  w-9 h-9 rounded-full text-xs font-bold transition-all
-                  ${currentPage === page
-                    ? 'bg-[#0B4DBA] text-white shadow-[0_2px_8px_rgba(11,77,186,0.30)]'
-                    : 'border border-[#DDE2EA] bg-white text-[#5F6673] hover:bg-[#F7F8FA]'
-                  }
-                `}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="w-9 h-9 rounded-full border border-[#DDE2EA] flex items-center justify-center text-[#5F6673] hover:bg-white disabled:opacity-40 transition-colors"
+                aria-label="Previous Page"
               >
-                {page}
+                <ChevronLeft size={16} />
               </button>
-            ))}
 
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(3, p + 1))}
-              disabled={currentPage === 3}
-              className="w-9 h-9 rounded-full border border-[#DDE2EA] flex items-center justify-center text-[#5F6673] hover:bg-white disabled:opacity-40 transition-colors"
-              aria-label="Next Page"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`
+                    w-9 h-9 rounded-full text-xs font-bold transition-all
+                    ${currentPage === page
+                      ? 'bg-[#0B4DBA] text-white shadow-[0_2px_8px_rgba(11,77,186,0.30)]'
+                      : 'border border-[#DDE2EA] bg-white text-[#5F6673] hover:bg-[#F7F8FA]'
+                    }
+                  `}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="w-9 h-9 rounded-full border border-[#DDE2EA] flex items-center justify-center text-[#5F6673] hover:bg-white disabled:opacity-40 transition-colors"
+                aria-label="Next Page"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
         </div>
       </section>
+
+      <AnnouncementModal
+        item={selectedItem}
+        categoryName={categoryName(selectedItem?.categoryId)}
+        onClose={() => setSelectedItem(null)}
+      />
     </PageLayout>
   )
 }

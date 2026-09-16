@@ -1,14 +1,13 @@
 import os
-import shutil
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_admin_user
 from app.models.document import Document
 from app.models.user import User
-from app.schemas.document import DocumentResponse, DocumentDetailResponse
+from app.schemas.document import DocumentResponse, DocumentDetailResponse, DocumentUpdate
 
 router = APIRouter()
 
@@ -17,11 +16,12 @@ os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
 def process_document_task(document_id: int, db_url: str):
     """
-    Background worker for RAG processing (Phase 7 & 10 pipeline).
-    Extracts text, splits chunks, generates embeddings, stores to ChromaDB.
+    Background worker for RAG processing: extracts text, splits into chunks,
+    generates embeddings, and stores them in the document_chunks table (pgvector).
     """
     from app.core.database import SessionLocal
     db = SessionLocal()
+    doc = None
     try:
         doc = db.query(Document).filter(Document.id == document_id).first()
         if not doc:
@@ -32,7 +32,7 @@ def process_document_task(document_id: int, db_url: str):
 
         from app.services.rag import get_rag_service
         rag_svc = get_rag_service()
-        rag_svc.rebuild_index()
+        rag_svc.index_document(db, doc)
 
         doc.status = "ready"
         db.commit()
@@ -75,6 +75,9 @@ def get_document(
 async def upload_document(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
+    name: Optional[str] = Form(None),
+    category_id: Optional[int] = Form(None),
+    description: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     admin: User = Depends(get_current_admin_user)
 ):
@@ -104,11 +107,13 @@ async def upload_document(
 
     document = Document(
         filename=sanitized_name,
-        original_name=file.filename,
+        original_name=name.strip() if name and name.strip() else file.filename,
         file_path=file_path,
         file_type=ext,
         file_size=file_size,
         status="processing",
+        category_id=category_id,
+        description=description,
         uploaded_by=admin.id
     )
     db.add(document)
@@ -119,6 +124,25 @@ async def upload_document(
     background_tasks.add_task(process_document_task, document.id, settings.DATABASE_URL)
 
     return document
+
+
+@router.put("/{document_id}", response_model=DocumentResponse)
+def update_document(
+    document_id: int,
+    document_in: DocumentUpdate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user)
+):
+    item = db.query(Document).filter(Document.id == document_id).first()
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+
+    for field, value in document_in.model_dump(exclude_unset=True).items():
+        setattr(item, field, value)
+
+    db.commit()
+    db.refresh(item)
+    return item
 
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)

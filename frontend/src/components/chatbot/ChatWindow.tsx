@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Bot, Download, RotateCcw, Shield } from 'lucide-react'
+import { Download, RotateCcw, Shield } from 'lucide-react'
 import type { Message } from '@/types'
 import ChatMessage from './ChatMessage'
 import TypingIndicator from './TypingIndicator'
 import WelcomeScreen from './WelcomeScreen'
 import ChatInput from './ChatInput'
+import Logo from '@/components/common/Logo'
 import toast from 'react-hot-toast'
 
 interface ChatWindowProps {
@@ -53,18 +54,29 @@ export default function ChatWindow({
   return (
     <div className="flex flex-col h-full bg-[#F8FAFC]">
       {/* ── Chat Header (Matched with Reference Image) ─────────────── */}
-      <header className="bg-white border-b border-[#E2E8F0] px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4 flex-shrink-0">
+      <header
+        className="bg-white px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4 flex-shrink-0 relative"
+        style={{ borderBottom: '1px solid #E2E8F0' }}
+      >
+        <div
+          className="absolute bottom-0 left-0 right-0"
+          style={{ height: 2, background: 'linear-gradient(90deg, #062E66, #0B4DBA, #38BDF8)' }}
+          aria-hidden="true"
+        />
         {/* Left: Chatbot Title & Subtitle */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E5EDFF] flex items-center justify-center text-[#0B4DBA] flex-shrink-0">
-            <Bot size={22} />
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 p-1.5"
+            style={{ background: 'linear-gradient(135deg, #E5EDFF, #DBEAFE)', boxShadow: '0 2px 8px rgba(11,77,186,0.1)' }}
+          >
+            <Logo size={28} />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-sm sm:text-base font-bold text-[#062E66]">
                 ระบบ AI Chatbot กยศ.
               </h1>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#E0F2FE] text-[#0369A1]">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EFF6FF] text-[#0B2E5E]">
                 RAG System
               </span>
             </div>
@@ -79,7 +91,7 @@ export default function ChatWindow({
           {/* Download Chat */}
           <button
             onClick={handleDownloadAll}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1E293B] hover:bg-[#0F172A] text-white transition-colors cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#062E66] border border-[#DDE2EA] bg-white hover:bg-[#EFF6FF] hover:border-[#0B4DBA] transition-colors cursor-pointer"
             title="ดาวน์โหลดประวัติแชททั้งหมด"
           >
             <Download size={13} />
@@ -89,7 +101,7 @@ export default function ChatWindow({
           {/* Reset / New Chat */}
           <button
             onClick={onReset}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1E293B] hover:bg-[#0F172A] text-white transition-colors cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#062E66] border border-[#DDE2EA] bg-white hover:bg-[#EFF6FF] hover:border-[#0B4DBA] transition-colors cursor-pointer"
             title="เริ่มการสนทนาใหม่"
           >
             <RotateCcw size={13} />
@@ -98,8 +110,9 @@ export default function ChatWindow({
 
           {/* Officer / Admin Portal */}
           <Link
-            to="/login"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#062E66] hover:bg-[#0B4DBA] text-white transition-colors"
+            to="/admin/login"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:brightness-110 hover:shadow-lg"
+            style={{ background: 'linear-gradient(135deg, #062E66, #0B4DBA)', boxShadow: '0 2px 10px rgba(6,46,102,0.3)' }}
           >
             <Shield size={13} />
             <span>ส่วนเจ้าหน้าที่</span>

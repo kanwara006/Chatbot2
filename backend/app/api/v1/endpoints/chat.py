@@ -3,11 +3,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user_optional
+from app.core.timezone import now_th
 from app.models.chat import Conversation, Message, MessageSource, MessageFeedback
 from app.models.user import User
 from app.schemas.chat import (
     ChatMessageRequest,
     MessageResponse,
+    MessageSourceResponse,
     MessageFeedbackCreate,
     MessageFeedbackResponse,
     ConversationResponse,
@@ -38,8 +40,8 @@ MOCK_ANSWERS = [
 - ยื่นเอกสารที่งานกองทุนฯ ตามกำหนดการที่ประกาศ
 - ลงนามสัญญากู้ยืมใหม่ทุกปีการศึกษา""",
         "sources": [
-            {"filename": "ขั้นตอนการดำเนินการกู้ยืม ปี 2569.pdf", "chunk_content": "ผู้กู้รายเก่าต้องดำเนินการ...", "similarity": "0.94"},
-            {"filename": "ประกาศ กยศ. ภาคเรียนที่ 1/2569.pdf", "chunk_content": "กำหนดการยื่นเอกสาร...", "similarity": "0.89"}
+            {"filename": "ขั้นตอนการดำเนินการกู้ยืม ปี 2569.pdf", "similarity": "0.94"},
+            {"filename": "ประกาศ กยศ. ภาคเรียนที่ 1/2569.pdf", "similarity": "0.89"}
         ]
     },
     {
@@ -52,7 +54,7 @@ MOCK_ANSWERS = [
 4. **หนังสือรับรองรายได้** ของผู้ปกครอง/ครอบครัว
 5. **ใบรับรองนักศึกษา** จากมหาวิทยาลัย""",
         "sources": [
-            {"filename": "รายการเอกสารการกู้ยืม กยศ. 2569.pdf", "chunk_content": "รายการเอกสารที่ต้องจัดเตรียม...", "similarity": "0.96"}
+            {"filename": "รายการเอกสารการกู้ยืม กยศ. 2569.pdf", "similarity": "0.96"}
         ]
     },
     {
@@ -63,7 +65,7 @@ MOCK_ANSWERS = [
 - บันทึกผ่านแอปพลิเคชัน **กยศ. Connect**
 - ต้องมีการรับรองจากผู้ควบคุมกิจกรรม""",
         "sources": [
-            {"filename": "ระเบียบกิจกรรมจิตอาสา กยศ. 2569.pdf", "chunk_content": "ผู้กู้ยืมต้องทำกิจกรรมจิตอาสาไม่น้อยกว่า 36 ชั่วโมง...", "similarity": "0.95"}
+            {"filename": "ระเบียบกิจกรรมจิตอาสา กยศ. 2569.pdf", "similarity": "0.95"}
         ]
     }
 ]
@@ -72,10 +74,10 @@ MOCK_ANSWERS = [
 from app.services.rag import get_rag_service
 
 
-def generate_chat_response(query: str):
+def generate_chat_response(db: Session, query: str):
     try:
         rag_svc = get_rag_service()
-        result = rag_svc.query(query)
+        result = rag_svc.query(db, query)
         answer = result.get("answer", "")
         sources = result.get("retrieval", [])
         return answer, sources
@@ -140,15 +142,38 @@ def send_message(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
-    # 1. Get or create conversation
+    # Guests are not signed in: answer the question but never write to the DB.
+    if not current_user:
+        answer_text, sources_data = generate_chat_response(db, payload.message)
+        return MessageResponse(
+            id=0,
+            conversation_id=0,
+            role="assistant",
+            content=answer_text,
+            created_at=now_th(),
+            sources=[
+                MessageSourceResponse(
+                    id=0,
+                    filename=src["filename"],
+                    page_number=str(src.get("page", "")) if src.get("page") is not None else None,
+                    similarity_score=src.get("similarity", "0.90"),
+                )
+                for src in sources_data
+            ],
+            feedback=None,
+        )
+
+    # 1. Get or create conversation (owned by the signed-in user only)
     conv = None
     if payload.conversation_id:
         conv = db.query(Conversation).filter(Conversation.id == payload.conversation_id).first()
+        if not conv or conv.user_id != current_user.id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
     if not conv:
         title = payload.message[:30] + ("..." if len(payload.message) > 30 else "")
         conv = Conversation(
-            user_id=current_user.id if current_user else None,
+            user_id=current_user.id,
             title=title
         )
         db.add(conv)
@@ -165,7 +190,7 @@ def send_message(
     db.commit()
 
     # 3. Generate AI response (Phase 7 & 8 will use RAG Engine)
-    answer_text, sources_data = generate_chat_response(payload.message)
+    answer_text, sources_data = generate_chat_response(db, payload.message)
 
     # 4. Save Assistant message
     ai_msg = Message(
@@ -181,9 +206,9 @@ def send_message(
     for src in sources_data:
         source_record = MessageSource(
             message_id=ai_msg.id,
+            document_id=src.get("document_id"),
             filename=src["filename"],
             page_number=str(src.get("page", "")) if src.get("page") is not None else None,
-            chunk_content=src.get("chunk_content", ""),
             similarity_score=src.get("similarity", "0.90")
         )
         db.add(source_record)

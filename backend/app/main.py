@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.database import Base, engine
 from app.api.v1.api import api_router
@@ -10,7 +11,6 @@ Base.metadata.create_all(bind=engine)
 
 # Ensure upload directory exists
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-os.makedirs(settings.CHROMA_PERSIST_DIR, exist_ok=True)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -31,6 +31,7 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 
 @app.get("/")

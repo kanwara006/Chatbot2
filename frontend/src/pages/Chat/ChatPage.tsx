@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import ChatSidebar from '@/components/chatbot/ChatSidebar'
 import ChatWindow from '@/components/chatbot/ChatWindow'
 import { useChat } from '@/hooks/useChat'
+import Logo from '@/components/common/Logo'
 
 /**
  * ChatPage — หน้า AI Chatbot ปรับปรุงตามแบบภาพตัวอย่าง
@@ -31,22 +32,7 @@ export default function ChatPage() {
       {/* ── 1. Top Navbar: PSU Branding Header (Matched with Reference Image) ── */}
       <header className="bg-white border-b border-[#E2E8F0] px-4 sm:px-6 py-2.5 flex items-center justify-between z-30 flex-shrink-0">
         <Link to="/" className="flex items-center gap-3 group" aria-label="กลับหน้าแรก">
-          <div className="w-10 h-10 flex-shrink-0">
-            <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="44" height="44" rx="8" fill="#0B2E5E"/>
-              <text
-                x="22" y="28"
-                textAnchor="middle"
-                fill="white"
-                fontSize="16"
-                fontWeight="700"
-                fontFamily="IBM Plex Sans Thai, sans-serif"
-                letterSpacing="-0.5"
-              >
-                PSU
-              </text>
-            </svg>
-          </div>
+          <Logo size={40} />
           <div className="leading-tight">
             <p className="text-sm font-bold text-[#0B2E5E] tracking-tight">
               มหาวิทยาลัยสงขลานครินทร์

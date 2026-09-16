@@ -1,191 +1,242 @@
-import { Users, MessageSquare, FileText, TrendingUp, ThumbsUp, AlertCircle, HelpCircle } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { MessageSquare, CheckCircle2, Smile, FileText, MessageCircleQuestion, TrendingUp, PieChart as PieChartIcon, Clock, FolderOpen } from 'lucide-react'
 import { motion } from 'framer-motion'
+import toast from 'react-hot-toast'
+import {
+  AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts'
+import {
+  fetchDashboardStats, fetchUsageTrend, fetchCategoryBreakdown,
+  fetchRecentQuestions, fetchRecentDocuments,
+  type DashboardStats, type UsageTrendPoint, type CategoryBreakdown, type RecentQuestion, type RecentDocument,
+} from '@/services/dashboardService'
+import { extractErrorMessage } from '@/services/authService'
+import { formatThaiDate } from '@/utils/date'
+import AdminStatCard from '@/components/admin/AdminStatCard'
+import AdminLoadingState from '@/components/admin/AdminLoadingState'
+import AdminEmptyState from '@/components/admin/AdminEmptyState'
+import mascotImg from '@/assets/dashboard-mascot.png'
 
-// ── Mock Stats ──────────────────────────────────────────────────────
-const stats = [
-  {
-    id: 'users', label: 'จำนวนผู้ใช้งาน', value: '248',
-    change: '+12 เดือนนี้', icon: Users, color: '#1E5AA8', bg: '#EFF6FF',
-  },
-  {
-    id: 'questions', label: 'คำถามทั้งหมด', value: '1,842',
-    change: '+134 เดือนนี้', icon: MessageSquare, color: '#7C3AED', bg: '#F5F3FF',
-  },
-  {
-    id: 'conversations', label: 'บทสนทนา', value: '573',
-    change: '+43 เดือนนี้', icon: TrendingUp, color: '#059669', bg: '#ECFDF5',
-  },
-  {
-    id: 'documents', label: 'เอกสาร KB', value: '24',
-    change: 'พร้อมใช้งาน 22 ชิ้น', icon: FileText, color: '#D97706', bg: '#FFFBEB',
-  },
-]
+const PIE_COLORS = ['#1E5AA8', '#059669', '#D97706', '#7C3AED', '#EF4444', '#94A3B8']
 
-// ── Mock Popular Questions ──────────────────────────────────────────
-const popularQuestions = [
-  { q: 'ผู้กู้รายเก่าต้องดำเนินการอย่างไร?',   count: 234, positive: 88 },
-  { q: 'ต้องใช้เอกสารอะไรบ้าง?',               count: 198, positive: 92 },
-  { q: 'ต้องทำจิตอาสากี่ชั่วโมง?',             count: 176, positive: 85 },
-  { q: 'กำหนดการกู้ยืมปี 2569 มีวันไหน?',      count: 143, positive: 79 },
-  { q: 'วิธีสมัครกู้ยืม กยศ. สำหรับรายใหม่?', count: 121, positive: 90 },
-]
-
-// ── Mock Unanswered ─────────────────────────────────────────────────
-const unanswered = [
-  { q: 'ถ้ารายได้ครอบครัวเกินกำหนดแต่มีรายจ่ายสูงจะขอกู้ได้ไหม?', date: '19 ส.ค. 2569' },
-  { q: 'การยืนยันการเบิกเงินค่าครองชีพต้องทำผ่านช่องทางไหน?',       date: '18 ส.ค. 2569' },
-  { q: 'กรณีผิดนัดชำระหนี้สามารถขอผ่อนผันได้ไหม?',                 date: '17 ส.ค. 2569' },
-]
-
-// Stat card component
-function StatCard({ stat, delay }: { stat: typeof stats[0]; delay: number }) {
-  const Icon = stat.icon
+/** Tooltip แบบกำหนดเอง ให้เข้ากับดีไซน์การ์ดของระบบ แทน tooltip เริ่มต้นของ recharts */
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { color?: string; name?: string; value?: number | string; dataKey?: string }[]; label?: string }) {
+  if (!active || !payload || !payload.length) return null
   return (
-    <motion.div
-      className="card p-5"
-      style={{ borderRadius: '16px' }}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay }}
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div
-          className="flex items-center justify-center rounded-xl"
-          style={{ width: 44, height: 44, background: stat.bg }}
-        >
-          <Icon size={20} style={{ color: stat.color }} />
-        </div>
-        <span className="text-xs text-[#10B981] font-medium bg-green-50 px-2 py-1 rounded-lg">
-          {stat.change}
-        </span>
+    <div className="rounded-xl bg-white px-3.5 py-2.5" style={{ boxShadow: '0 8px 24px rgba(15,23,42,0.14)', border: '1px solid #EDF2F7' }}>
+      {label && <p className="text-[11px] font-semibold text-[#94A3B8] mb-1.5">{formatThaiDate(label)}</p>}
+      <div className="space-y-1">
+        {payload.map((p) => (
+          <div key={p.dataKey} className="flex items-center gap-2 text-xs">
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.color }} />
+            <span className="text-[#64748B]">{p.name}:</span>
+            <span className="font-semibold text-[#14213D]">{p.value}</span>
+          </div>
+        ))}
       </div>
-      <p className="text-2xl font-bold text-[#14213D]">{stat.value}</p>
-      <p className="text-sm text-[#64748B] mt-0.5">{stat.label}</p>
-    </motion.div>
+    </div>
   )
 }
 
 /**
- * AdminDashboard — หน้าหลัก Admin
- *
- * แสดง: Stats, Popular Questions, Unanswered Questions, Quick Actions
+ * AdminDashboard — หน้าหลัก Admin (ตาม design-reference: admin_dashboard.png)
  */
 export default function AdminDashboard() {
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [trend, setTrend] = useState<UsageTrendPoint[]>([])
+  const [breakdown, setBreakdown] = useState<CategoryBreakdown[]>([])
+  const [recentQuestions, setRecentQuestions] = useState<RecentQuestion[]>([])
+  const [recentDocs, setRecentDocs] = useState<RecentDocument[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      fetchDashboardStats(),
+      fetchUsageTrend(7),
+      fetchCategoryBreakdown(),
+      fetchRecentQuestions(5),
+      fetchRecentDocuments(5),
+    ])
+      .then(([s, t, b, q, d]) => {
+        setStats(s)
+        setTrend(t)
+        setBreakdown(b)
+        setRecentQuestions(q)
+        setRecentDocs(d)
+      })
+      .catch((err) => toast.error(extractErrorMessage(err, 'โหลดข้อมูล Dashboard ไม่สำเร็จ')))
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <div className="p-6 lg:p-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#0B2E5E]">Dashboard</h1>
-        <p className="text-sm text-[#64748B] mt-1">ภาพรวมระบบ PSU SLF AI Chatbot</p>
-      </div>
-
-      {/* ── Stats Grid ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-        {stats.map((s, i) => <StatCard key={s.id} stat={s} delay={i * 0.08} />)}
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-        {/* ── Popular Questions ─────────────────────────────────── */}
-        <div className="xl:col-span-2 card p-6" style={{ borderRadius: '16px' }}>
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-bold text-[#14213D]">คำถามยอดนิยม</h2>
-            <span className="badge badge-blue">เดือนนี้</span>
-          </div>
-
-          <div className="space-y-3">
-            {popularQuestions.map((item, idx) => (
-              <div
-                key={idx}
-                className="flex items-center gap-4 p-3 rounded-xl"
-                style={{ background: '#F7F9FC' }}
-              >
-                <span
-                  className="flex-shrink-0 flex items-center justify-center rounded-lg text-xs font-bold"
-                  style={{
-                    width:      32,
-                    height:     32,
-                    background: idx === 0 ? '#0B2E5E' : idx === 1 ? '#1E5AA8' : '#E2E8F0',
-                    color:      idx < 2 ? '#fff' : '#64748B',
-                  }}
-                >
-                  {idx + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[#14213D] truncate">{item.q}</p>
-                  <p className="text-xs text-[#94A3B8] mt-0.5">{item.count} ครั้ง</p>
-                </div>
-                <div className="flex items-center gap-1 text-xs text-green-600 flex-shrink-0">
-                  <ThumbsUp size={11} />
-                  {item.positive}%
-                </div>
-              </div>
-            ))}
+      {/* Welcome banner — rich dark gradient with the AI mascot perched on top */}
+      <div className="relative mb-6">
+        <div
+          className="relative overflow-hidden rounded-[24px] px-6 py-7 sm:px-8 sm:py-8"
+          style={{ background: 'linear-gradient(120deg, #0B2E5E 0%, #1E5AA8 60%, #FFFFFF 100%)' }}
+        >
+          <div className="absolute rounded-full pointer-events-none" style={{ width: 220, height: 220, top: -80, right: -40, background: 'rgba(255,255,255,0.08)' }} aria-hidden="true" />
+          <div className="absolute rounded-full pointer-events-none" style={{ width: 140, height: 140, bottom: -60, right: 140, background: 'rgba(14,165,233,0.25)' }} aria-hidden="true" />
+          <div className="relative max-w-[75%] sm:max-w-[80%]">
+            <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">ยินดีต้อนรับ, ผู้ดูแลระบบ</h1>
+            <p className="text-[13px] text-white/75 mt-1.5">ภาพรวมการใช้งานระบบแชทบอท กยศ.</p>
           </div>
         </div>
 
-        {/* ── Right Column ──────────────────────────────────────── */}
-        <div className="space-y-5">
+        {/* AI mascot perched on top of the banner */}
+        <img
+          src={mascotImg}
+          alt="ผู้ช่วย AI"
+          className="absolute -top-11 right-6 sm:right-12 pointer-events-none select-none"
+          style={{ width: 132, filter: 'drop-shadow(0 10px 16px rgba(11,46,94,0.35))' }}
+        />
+      </div>
 
-          {/* Unanswered questions */}
-          <div className="card p-5" style={{ borderRadius: '16px' }}>
-            <div className="flex items-center gap-2 mb-4">
-              <AlertCircle size={16} className="text-amber-500" />
-              <h3 className="font-bold text-[#14213D] text-sm">คำถามที่ AI ตอบไม่ได้</h3>
-            </div>
-            <div className="space-y-3">
-              {unanswered.map((item, i) => (
-                <div key={i} className="border-l-2 pl-3" style={{ borderColor: '#FCD34D' }}>
-                  <p className="text-xs text-[#14213D] leading-snug">{item.q}</p>
-                  <p className="text-[10px] text-[#94A3B8] mt-0.5">{item.date}</p>
-                </div>
-              ))}
-            </div>
-            <Link
-              to="/admin/documents"
-              className="flex items-center justify-center gap-1.5 mt-4 py-2 rounded-lg text-xs font-semibold text-[#1E5AA8] bg-[#EFF6FF] hover:bg-[#DBEAFE] transition-colors"
-            >
-              <FileText size={12} />
-              เพิ่มเอกสาร Knowledge Base
-            </Link>
+      {loading || !stats ? (
+        <AdminLoadingState />
+      ) : (
+      <>
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <AdminStatCard icon={MessageSquare} label="คำถามทั้งหมด" value={stats.messages.toLocaleString()} color="#1E5AA8" delay={0} variant="vivid" />
+          <AdminStatCard icon={CheckCircle2} label="ตอบคำถามสำเร็จ" value={stats.answered.toLocaleString()} color="#0E7490" delay={0.05} variant="vivid" />
+          <AdminStatCard icon={Smile} label="ความพึงพอใจ" value={`${stats.positiveRate}%`} color="#4F46E5" delay={0.1} variant="vivid" />
+          <AdminStatCard icon={FileText} label="เอกสารพร้อมใช้งาน" value={`${stats.documents}/${stats.totalDocuments}`} color="#0369A1" delay={0.15} variant="vivid" />
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+          {/* Usage trend area chart */}
+          <div className="xl:col-span-2 admin-card p-6" style={{ borderRadius: '20px' }}>
+            <h2 className="flex items-center gap-2 font-bold text-base text-[#14213D] mb-4">
+              <span className="flex items-center justify-center rounded-lg" style={{ width: 26, height: 26, background: 'linear-gradient(135deg, #1E5AA8, #3B82F6)' }}>
+                <TrendingUp size={14} className="text-white" />
+              </span>
+              สถิติการใช้งาน
+            </h2>
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={trend} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#1E5AA8" stopOpacity={0.28} />
+                    <stop offset="95%" stopColor="#1E5AA8" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradSuccess" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0E7490" stopOpacity={0.28} />
+                    <stop offset="95%" stopColor="#0E7490" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#EDF2F7" vertical={false} />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94A3B8' }} tickFormatter={(d) => formatThaiDate(d).split(' ').slice(0, 2).join(' ')} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#94A3B8' }} allowDecimals={false} axisLine={false} tickLine={false} width={30} />
+                <Tooltip content={<ChartTooltip />} />
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
+                <Area
+                  type="monotone" dataKey="total" name="คำถามทั้งหมด"
+                  stroke="#1E5AA8" strokeWidth={2.5} fill="url(#gradTotal)"
+                  dot={{ r: 3, strokeWidth: 2, stroke: '#fff', fill: '#1E5AA8' }}
+                  activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                />
+                <Area
+                  type="monotone" dataKey="success" name="ตอบคำถามสำเร็จ"
+                  stroke="#0E7490" strokeWidth={2.5} fill="url(#gradSuccess)"
+                  dot={{ r: 3, strokeWidth: 2, stroke: '#fff', fill: '#0E7490' }}
+                  activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
 
-          {/* Quick Actions */}
-          <div className="card p-5" style={{ borderRadius: '16px' }}>
-            <h3 className="font-bold text-[#14213D] text-sm mb-4">Quick Actions</h3>
-            <div className="space-y-2">
-              {[
-                { to: '/admin/documents',     icon: FileText,   label: 'Upload เอกสาร',   color: '#1E5AA8', bg: '#EFF6FF' },
-                { to: '/admin/announcements', icon: HelpCircle, label: 'เพิ่มประกาศ',     color: '#7C3AED', bg: '#F5F3FF' },
-                { to: '/admin/faq',           icon: HelpCircle, label: 'เพิ่ม FAQ ใหม่',  color: '#059669', bg: '#ECFDF5' },
-              ].map((action) => {
-                const Icon = action.icon
-                return (
-                  <Link
-                    key={action.to}
-                    to={action.to}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group"
+          {/* Category breakdown donut */}
+          <div className="admin-card p-6" style={{ borderRadius: '20px' }}>
+            <h2 className="flex items-center gap-2 font-bold text-base text-[#14213D] mb-4">
+              <span className="flex items-center justify-center rounded-lg" style={{ width: 26, height: 26, background: 'linear-gradient(135deg, #7C3AED, #A78BFA)' }}>
+                <PieChartIcon size={14} className="text-white" />
+              </span>
+              หมวดหมู่คำถามยอดนิยม
+            </h2>
+            {breakdown.length === 0 ? (
+              <AdminEmptyState icon={MessageCircleQuestion} title="ยังไม่มีข้อมูลอ้างอิงหมวดหมู่" subtitle="จะแสดงเมื่อ AI เริ่มตอบคำถามโดยอ้างอิงเอกสารในระบบ" />
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie data={breakdown} dataKey="count" nameKey="categoryName" innerRadius={55} outerRadius={85} paddingAngle={3} cornerRadius={6}>
+                    {breakdown.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="#fff" strokeWidth={2} />)}
+                  </Pie>
+                  <Tooltip
+                    formatter={(v, n) => [`${v} ครั้ง`, n]}
+                    contentStyle={{ borderRadius: 12, border: '1px solid #EDF2F7', boxShadow: '0 8px 24px rgba(15,23,42,0.14)' }}
+                  />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* Recent questions */}
+          <div className="admin-card p-6" style={{ borderRadius: '20px' }}>
+            <h2 className="flex items-center gap-2 font-bold text-base text-[#14213D] mb-4">
+              <span className="flex items-center justify-center rounded-lg" style={{ width: 26, height: 26, background: 'linear-gradient(135deg, #059669, #34D399)' }}>
+                <Clock size={14} className="text-white" />
+              </span>
+              คำถามล่าสุด
+            </h2>
+            {recentQuestions.length === 0 ? (
+              <AdminEmptyState icon={MessageCircleQuestion} title="ยังไม่มีคำถาม" />
+            ) : (
+              <div className="space-y-2.5">
+                {recentQuestions.map((q, i) => (
+                  <motion.div
+                    key={q.id}
+                    className="flex items-center gap-3 p-3 rounded-xl transition-all hover:-translate-y-0.5"
                     style={{ background: '#F7F9FC' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = action.bg }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = '#F7F9FC' }}
+                    initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}
                   >
-                    <div
-                      className="flex-shrink-0 flex items-center justify-center rounded-lg"
-                      style={{ width: 30, height: 30, background: action.bg }}
-                    >
-                      <Icon size={14} style={{ color: action.color }} />
+                    <span className="flex-shrink-0 w-2 h-2 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} aria-hidden="true" />
+                    <p className="text-[13px] text-[#14213D] truncate flex-1">{q.content}</p>
+                    <span className="text-xs text-[#64748B] whitespace-nowrap">{formatThaiDate(q.createdAt)}</span>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Recent documents */}
+          <div className="admin-card p-6" style={{ borderRadius: '20px' }}>
+            <h2 className="flex items-center gap-2 font-bold text-base text-[#14213D] mb-4">
+              <span className="flex items-center justify-center rounded-lg" style={{ width: 26, height: 26, background: 'linear-gradient(135deg, #D97706, #FBBF24)' }}>
+                <FolderOpen size={14} className="text-white" />
+              </span>
+              เอกสารล่าสุด
+            </h2>
+            {recentDocs.length === 0 ? (
+              <AdminEmptyState icon={FileText} title="ยังไม่มีเอกสาร" />
+            ) : (
+              <div className="space-y-2.5">
+                {recentDocs.map((d, i) => (
+                  <motion.div
+                    key={d.id}
+                    className="flex items-center gap-3 p-3 rounded-xl transition-all hover:-translate-y-0.5"
+                    style={{ background: '#F7F9FC' }}
+                    initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}
+                  >
+                    <div className="flex items-center justify-center rounded-lg flex-shrink-0" style={{ width: 32, height: 32, background: '#FEF2F2' }}>
+                      <FileText size={15} className="text-[#EF4444]" />
                     </div>
-                    <span className="text-sm text-[#14213D] group-hover:text-[#0B2E5E] font-medium">
-                      {action.label}
-                    </span>
-                  </Link>
-                )
-              })}
-            </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium text-[#14213D] truncate">{d.originalName}</p>
+                      <p className="text-xs text-[#64748B]">อัปเดต {formatThaiDate(d.updatedAt)}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      </>
+      )}
     </div>
   )
 }

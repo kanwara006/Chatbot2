@@ -9,7 +9,7 @@ import Footer from '@/components/layout/Footer'
 export default function DocumentsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F8FA]">
-      <Navbar isAuthenticated={true} userName="กัญวรา ใจดี" />
+      <Navbar />
 
       <main className="flex-1">
         {/* ── Solid Deep Navy Hero ───────────────────────────────── */}

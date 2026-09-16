@@ -22,12 +22,24 @@ class DocumentResponse(BaseModel):
     file_size: int
     status: str
     error_message: Optional[str] = None
+    category_id: Optional[int] = None
+    description: Optional[str] = None
+    is_active: bool
+    display_order: int
     uploaded_by: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class DocumentUpdate(BaseModel):
+    original_name: Optional[str] = None
+    category_id: Optional[int] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+    display_order: Optional[int] = None
 
 
 class DocumentDetailResponse(DocumentResponse):

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import (
     verify_password,
@@ -8,7 +9,7 @@ from app.core.security import (
     get_current_user
 )
 from app.models.user import User
-from app.schemas.auth import Token, LoginRequest
+from app.schemas.auth import Token, LoginRequest, AdminRegisterRequest
 from app.schemas.user import UserCreate, UserResponse
 
 router = APIRouter()
@@ -47,6 +48,33 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     return user
 
 
+@router.post("/register-admin", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def register_admin(payload: AdminRegisterRequest, db: Session = Depends(get_db)):
+    if payload.staff_code != settings.ADMIN_REGISTER_CODE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="รหัสเจ้าหน้าที่ไม่ถูกต้อง"
+        )
+    if db.query(User).filter(User.email == payload.email).first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email is already registered."
+        )
+
+    user = User(
+        first_name=payload.first_name,
+        last_name=payload.last_name,
+        email=payload.email,
+        password_hash=get_password_hash(payload.password),
+        role="admin",
+        is_active=True
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 @router.post("/login", response_model=Token)
 def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(
@@ -73,7 +101,9 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         user_id=user.id,
         role=user.role,
         first_name=user.first_name,
-        last_name=user.last_name
+        last_name=user.last_name,
+        email=user.email,
+        student_id=user.student_id
     )
 
 

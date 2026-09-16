@@ -1,70 +1,32 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Search, ChevronDown, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import PageLayout from '@/components/layout/PageLayout'
 import campusImage from '@/assets/images/psu-campus.jpg'
-
-// ── FAQ Data ────────────────────────────────────────────────────────
-const faqsData = [
-  {
-    id: 1,
-    category: 'การสมัคร',
-    question: 'ใครมีสิทธิ์กู้ยืมเงินกองทุน กยศ. บ้าง?',
-    answer: 'นักศึกษาที่มีสิทธิ์กู้ยืมเงิน กยศ. ต้องมีสัญชาติไทย ศึกษาอยู่ในมหาวิทยาลัยสงขลานครินทร์ มีรายได้ครอบครัวไม่เกิน 360,000 บาท/ปี (สำหรับผู้กู้ลักษณะที่ 1 ขาดแคลนทุนทรัพย์) มีผลการเรียนเฉลี่ยสะสม (GPAX) ไม่ต่ำกว่า 2.00 และมีชั่วโมงกิจกรรมจิตอาสาครบ 36 ชั่วโมง/ปีการศึกษา',
-  },
-  {
-    id: 2,
-    category: 'การสมัคร',
-    question: 'ขั้นตอนการสมัครกู้ยืมเงิน กยศ. มีขั้นตอนอย่างไร?',
-    answer: '1. ยื่นคำขอกู้ยืมผ่านแอปพลิเคชัน กยศ. Connect\n2. จัดเตรียมและนำส่งเอกสารประกอบการกู้ยืมให้แก่มหาวิทยาลัย\n3. ติดตามผลการพิจารณาตรวจสอบคุณสมบัติ\n4. เมื่อได้รับการอนุมัติ ดำเนินการลงนามในสัญญากู้ยืมเงิน\n5. กองทุนโอนเงินค่าเล่าเรียนเข้ามหาวิทยาลัย และค่าครองชีพเข้าบัญชีนักศึกษา',
-  },
-  {
-    id: 3,
-    category: 'เอกสาร',
-    question: 'เอกสารสำคัญที่ต้องใช้ในการสมัครกู้ยืมมีอะไรบ้าง?',
-    answer: 'เอกสารหลักที่ต้องเตรียมประกอบด้วย:\n• สำเนาบัตรประจำตัวประชาชนและทะเบียนบ้านของนักศึกษา\n• สำเนาบัตรประจำตัวประชาชนและทะเบียนบ้านของบิดา มารดา หรือผู้ปกครอง\n• หนังสือรับรองรายได้ครอบครัว (กยศ. 102) หรือสลิปเงินเดือน\n• สำเนาใบแสดงผลการเรียน (Transcript)\n• หนังสือรับรองสภาพการเป็นนักศึกษา',
-  },
-  {
-    id: 4,
-    category: 'เอกสาร',
-    question: 'หนังสือรับรองรายได้ครอบครัว (กยศ. 102) ต้องให้ใครเป็นผู้รับรอง?',
-    answer: 'ผู้รับรองรายได้ต้องเป็นเจ้าหน้าที่ของรัฐ เช่น ข้าราชการประจำ, ข้าราชการบำนาญ, กำนัน, ผู้ใหญ่บ้าน, สมาชิกสภาองค์กรปกครองส่วนท้องถิ่น หรือหัวหน้าหน่วยงานราชการ พร้อมแนบสำเนาบัตรประจำตัวเจ้าหน้าที่ของรัฐที่ยังไม่หมดอายุ',
-  },
-  {
-    id: 5,
-    category: 'กำหนดการ',
-    question: 'กำหนดการยื่นคำขอกู้ยืมเงิน กยศ. ภาคเรียนที่ 1 ประจำปีการศึกษา?',
-    answer: 'สำหรับภาคเรียนที่ 1 มหาวิทยาลัยเปิดให้ยื่นคำขอกู้ยืมระหว่างวันที่ 1 เมษายน – 15 มิถุนายน และกำหนดให้ส่งเอกสารประกอบการกู้ยืมภายในเดือนกรกฎาคมของทุกปีการศึกษา (กรุณาติดตามประกาศกำหนดการล่าสุดจากทางมหาวิทยาลัย)',
-  },
-  {
-    id: 6,
-    category: 'กำหนดการ',
-    question: 'ต้องส่งชั่วโมงจิตอาสาภายในช่วงเวลาใด?',
-    answer: 'นักศึกษาผู้กู้ยืมต้องสะสมและบันทึกชั่วโมงกิจกรรมจิตอาสาให้ครบ 36 ชั่วโมง ภายในปีการศึกษาก่อนหน้า และนำหลักฐานการทำกิจกรรมจิตอาสามายื่นพร้อมกับเอกสารขอกู้ยืมเงินในแต่ละภาคเรียน',
-  },
-  {
-    id: 7,
-    category: 'การชำระเงิน',
-    question: 'เมื่อสำเร็จการศึกษาแล้ว จะต้องเริ่มชำระหนี้คืนกองทุนเมื่อไหร่?',
-    answer: 'ผู้กู้ยืมเงินจะได้รับระยะเวลาปลอดหนี้ 2 ปี นับจากปีที่สำเร็จการศึกษา หรือพ้นสภาพการเป็นนักศึกษา หลังจากนั้นจะต้องเริ่มชำระเงินต้นพร้อมดอกเบี้ย (อัตรา 1% ต่อปี) คืนให้แก่กองทุน โดยสามารถเลือกผ่อนชำระเป็นรายปีหรือรายเดือนได้สูงสุด 15 ปี',
-  },
-  {
-    id: 8,
-    category: 'การชำระเงิน',
-    question: 'ช่องทางและวิธีการชำระหนี้คืนกองทุน กยศ. ทำอย่างไรได้บ้าง?',
-    answer: 'สามารถชำระเงินผ่านแอปพลิเคชัน กยศ. Connect, แอปพลิเคชัน Krungthai NEXT, สแกน QR Code ผ่าน Mobile Banking ทุกธนาคาร, เคาน์เตอร์ธนาคารกรุงไทย, เคาน์เตอร์เซอร์วิส 7-Eleven หรือหักผ่านบัญชีเงินเดือนอัตโนมัติ',
-  },
-]
-
-const categories = ['ทั้งหมด', 'การสมัคร', 'เอกสาร', 'กำหนดการ', 'การชำระเงิน']
+import type { FAQ } from '@/types'
+import { fetchFAQs } from '@/services/faqService'
+import { fetchCategories, type Category } from '@/services/categoryService'
 
 /**
  * FAQPage — Matched with Figma FAQ Reference Screen
  */
 export default function FAQPage() {
+  const [faqsData, setFaqsData] = useState<FAQ[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [activeCategory, setActiveCategory] = useState('ทั้งหมด')
-  const [openIds, setOpenIds] = useState<Set<number>>(new Set([1]))
+  const [activeCategory, setActiveCategory] = useState<number | 'all'>('all')
+  const [openIds, setOpenIds] = useState<Set<number>>(new Set())
+
+  useEffect(() => {
+    Promise.all([fetchFAQs(), fetchCategories()])
+      .then(([items, cats]) => {
+        setFaqsData(items)
+        setCategories(cats)
+        if (items[0]) setOpenIds(new Set([items[0].id]))
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
   const toggleFAQ = (id: number) => {
     setOpenIds((prev) => {
@@ -81,10 +43,10 @@ export default function FAQPage() {
         item.question.toLowerCase().includes(search.toLowerCase()) ||
         item.answer.toLowerCase().includes(search.toLowerCase())
       const matchCategory =
-        activeCategory === 'ทั้งหมด' || item.category === activeCategory
+        activeCategory === 'all' || item.categoryId === activeCategory
       return matchSearch && matchCategory
     })
-  }, [search, activeCategory])
+  }, [search, activeCategory, faqsData])
 
   return (
     <PageLayout>
@@ -132,12 +94,24 @@ export default function FAQPage() {
 
             {/* Category Chips */}
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setActiveCategory('all')}
+                className={`
+                  px-4 py-2 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer
+                  ${activeCategory === 'all'
+                    ? 'bg-[#0B4DBA] text-white shadow-[0_2px_8px_rgba(11,77,186,0.25)]'
+                    : 'bg-[#F7F8FA] text-[#5F6673] hover:bg-[#E5EDFF] hover:text-[#0B4DBA] border border-[#DDE2EA]'
+                  }
+                `}
+              >
+                ทั้งหมด
+              </button>
               {categories.map((cat) => {
-                const isActive = activeCategory === cat
+                const isActive = activeCategory === cat.id
                 return (
                   <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
                     className={`
                       px-4 py-2 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer
                       ${isActive
@@ -146,7 +120,7 @@ export default function FAQPage() {
                       }
                     `}
                   >
-                    {cat}
+                    {cat.name}
                   </button>
                 )
               })}
@@ -158,7 +132,11 @@ export default function FAQPage() {
       {/* ── 3. Accordion List ─────────────────────────────────────── */}
       <section className="section-sm">
         <div className="container-main max-w-4xl">
-          {filteredFAQs.length === 0 ? (
+          {loading ? (
+            <div className="bg-white rounded-2xl p-12 text-center border border-[#DDE2EA]">
+              <p className="text-[#5F6673] text-sm">กำลังโหลดข้อมูล...</p>
+            </div>
+          ) : filteredFAQs.length === 0 ? (
             <div className="bg-white rounded-2xl p-12 text-center border border-[#DDE2EA]">
               <p className="text-[#5F6673] text-sm">ไม่พบคำถามที่ตรงกับการค้นหา</p>
             </div>

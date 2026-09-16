@@ -1,5 +1,5 @@
 from typing import List, Union
-from pydantic import AnyHttpUrl, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "psu-secret-key-student-loan-fund-surat-thani-2026-super-secure-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
+
+    # Staff/admin self-registration requires this shared code (set by the fund office)
+    ADMIN_REGISTER_CODE: str = "PSU-SLF-STAFF-2569"
 
     # Database
     DATABASE_URL: str = "sqlite:///./psu_slf.db"
@@ -35,8 +38,6 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    CHROMA_PERSIST_DIR: str = "./chroma_data"
-    FAISS_INDEX_DIR: str = "./faiss_index"
     UPLOAD_DIR: str = "./uploads"
 
     model_config = SettingsConfigDict(

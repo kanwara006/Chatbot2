@@ -45,7 +45,7 @@ const scheduleItems = [
 export default function SchedulePage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F8FA]">
-      <Navbar isAuthenticated={true} userName="กัญวรา ใจดี" />
+      <Navbar />
 
       <main className="flex-1">
         {/* ── Solid Deep Navy Hero ───────────────────────────────── */}
