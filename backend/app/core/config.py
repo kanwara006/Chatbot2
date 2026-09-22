@@ -40,6 +40,15 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     UPLOAD_DIR: str = "./uploads"
 
+    # SMTP (สำหรับส่งอีเมลตอบกลับข้อความติดต่อจากแอดมิน) — ปล่อยว่างได้หากยังไม่ตั้งค่า
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_USE_TLS: bool = True
+    SMTP_FROM_EMAIL: str = ""
+    SMTP_FROM_NAME: str = "งานกองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.) ม.อ. สุราษฎร์ธานี"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

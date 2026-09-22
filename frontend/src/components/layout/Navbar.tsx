@@ -82,7 +82,7 @@ export default function Navbar() {
         </Link>
 
         {/* ── Center & Right: Desktop Navigation ────────────────────── */}
-        <div className="hidden md:flex items-center gap-1 lg:gap-2">
+        <div className="hidden xl:flex items-center gap-1 lg:gap-2">
           <div className="flex items-center gap-1 mr-4 lg:mr-6">
             {navLinks.map((link) => {
               const active = isActive(link.href)
@@ -174,7 +174,7 @@ export default function Navbar() {
         {/* ── Mobile Hamburger Toggle ──────────────────────────────── */}
         <button
           id="navbar-mobile-toggle"
-          className="md:hidden p-2 rounded-lg text-[#062E66] hover:bg-[#F7F8FA] transition-colors"
+          className="xl:hidden p-2 rounded-lg text-[#062E66] hover:bg-[#F7F8FA] transition-colors"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? 'ปิดเมนู' : 'เปิดเมนู'}
           aria-expanded={mobileOpen}
@@ -185,7 +185,7 @@ export default function Navbar() {
 
       {/* ── Mobile Drawer ─────────────────────────────────────────── */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-[#DDE2EA] bg-white animate-fade-in">
+        <div className="xl:hidden border-t border-[#DDE2EA] bg-white animate-fade-in">
           <div className="container-main py-4 flex flex-col gap-1.5">
             {navLinks.map((link) => {
               const active = isActive(link.href)

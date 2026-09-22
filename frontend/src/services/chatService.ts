@@ -87,21 +87,6 @@ export async function deleteConversationRemote(id: number): Promise<void> {
   }
 }
 
-export async function submitMessageFeedback(
-  messageId: number,
-  rating: 'like' | 'dislike'
-): Promise<void> {
-  try {
-    await axios.post(
-      `${API_BASE_URL}/chat/feedback/${messageId}`,
-      { rating },
-      { headers: getAuthHeader() }
-    )
-  } catch (error) {
-    console.error('Error submitting feedback:', error)
-  }
-}
-
 export function generateId(): number {
   return Date.now() + Math.floor(Math.random() * 1000)
 }

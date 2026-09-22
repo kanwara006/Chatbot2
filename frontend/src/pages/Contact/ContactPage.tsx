@@ -117,8 +117,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-bold text-[#111827] text-sm mb-1">อีเมล</h3>
-                    <a href="mailto:Studentloan@psu.ac.th" className="text-[#0B4DBA] font-medium hover:underline break-all">
-                      Studentloan@psu.ac.th
+                    <a href="mailto:studentloanpsu@gmail.com" className="text-[#0B4DBA] font-medium hover:underline break-all">
+                      studentloanpsu@gmail.com
                     </a>
                   </div>
                 </div>

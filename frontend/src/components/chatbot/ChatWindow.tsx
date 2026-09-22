@@ -14,7 +14,6 @@ interface ChatWindowProps {
   isLoading:    boolean
   messagesEndRef: React.RefObject<HTMLDivElement | null>
   onSend:       (msg: string) => void
-  onFeedback:   (id: number, rating: 'like' | 'dislike') => void
   onReset?:     () => void
 }
 
@@ -26,7 +25,6 @@ export default function ChatWindow({
   isLoading,
   messagesEndRef,
   onSend,
-  onFeedback,
   onReset,
 }: ChatWindowProps) {
   useEffect(() => {
@@ -64,34 +62,34 @@ export default function ChatWindow({
           aria-hidden="true"
         />
         {/* Left: Chatbot Title & Subtitle */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 p-1.5"
             style={{ background: 'linear-gradient(135deg, #E5EDFF, #DBEAFE)', boxShadow: '0 2px 8px rgba(11,77,186,0.1)' }}
           >
             <Logo size={28} />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-base font-bold text-[#062E66]">
+              <h1 className="text-sm sm:text-base font-bold text-[#062E66] truncate">
                 ระบบ AI Chatbot กยศ.
               </h1>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EFF6FF] text-[#0B2E5E]">
+              <span className="hidden sm:inline-block flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EFF6FF] text-[#0B2E5E]">
                 RAG System
               </span>
             </div>
-            <p className="text-xs text-[#5F6673]">
+            <p className="text-xs text-[#5F6673] truncate">
               มหาวิทยาลัยสงขลานครินทร์ วิทยาเขตสุราษฎร์ธานี
             </p>
           </div>
         </div>
 
         {/* Right: Actions Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* Download Chat */}
           <button
             onClick={handleDownloadAll}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#062E66] border border-[#DDE2EA] bg-white hover:bg-[#EFF6FF] hover:border-[#0B4DBA] transition-colors cursor-pointer"
+            className="hidden md:inline-flex flex-shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#062E66] border border-[#DDE2EA] bg-white hover:bg-[#EFF6FF] hover:border-[#0B4DBA] transition-colors cursor-pointer whitespace-nowrap"
             title="ดาวน์โหลดประวัติแชททั้งหมด"
           >
             <Download size={13} />
@@ -101,7 +99,7 @@ export default function ChatWindow({
           {/* Reset / New Chat */}
           <button
             onClick={onReset}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#062E66] border border-[#DDE2EA] bg-white hover:bg-[#EFF6FF] hover:border-[#0B4DBA] transition-colors cursor-pointer"
+            className="hidden md:inline-flex flex-shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#062E66] border border-[#DDE2EA] bg-white hover:bg-[#EFF6FF] hover:border-[#0B4DBA] transition-colors cursor-pointer whitespace-nowrap"
             title="เริ่มการสนทนาใหม่"
           >
             <RotateCcw size={13} />
@@ -111,11 +109,11 @@ export default function ChatWindow({
           {/* Officer / Admin Portal */}
           <Link
             to="/admin/login"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:brightness-110 hover:shadow-lg"
+            className="inline-flex flex-shrink-0 items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:brightness-110 hover:shadow-lg whitespace-nowrap"
             style={{ background: 'linear-gradient(135deg, #062E66, #0B4DBA)', boxShadow: '0 2px 10px rgba(6,46,102,0.3)' }}
           >
             <Shield size={13} />
-            <span>ส่วนเจ้าหน้าที่</span>
+            <span className="hidden sm:inline">ส่วนเจ้าหน้าที่</span>
           </Link>
         </div>
       </header>
@@ -136,7 +134,6 @@ export default function ChatWindow({
               <ChatMessage
                 key={msg.id}
                 message={msg}
-                onFeedback={onFeedback}
               />
             ))}
 

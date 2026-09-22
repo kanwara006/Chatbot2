@@ -29,22 +29,6 @@ class MessageSourceResponse(BaseModel):
         from_attributes = True
 
 
-class MessageFeedbackCreate(BaseModel):
-    rating: str  # like, dislike
-    comment: Optional[str] = None
-
-
-class MessageFeedbackResponse(BaseModel):
-    id: int
-    message_id: int
-    rating: str
-    comment: Optional[str] = None
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
 class MessageResponse(BaseModel):
     id: int
     conversation_id: int
@@ -52,7 +36,6 @@ class MessageResponse(BaseModel):
     content: str
     created_at: datetime
     sources: List[MessageSourceResponse] = []
-    feedback: Optional[MessageFeedbackResponse] = None
 
     class Config:
         from_attributes = True

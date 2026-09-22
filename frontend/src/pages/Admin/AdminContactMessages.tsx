@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Search, Mail, MailOpen, Eye, Trash2, X, CalendarDays, Reply, IdCard, Tag, MessageSquareText } from 'lucide-react'
+import { Search, Mail, MailOpen, Eye, Trash2, X, CalendarDays, Reply, IdCard, Tag, MessageSquareText, Send, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import {
   fetchContactMessages,
   markContactMessageRead,
   deleteContactMessage,
+  replyToContactMessage,
   type ContactMessage,
 } from '@/services/contactService'
 import { extractErrorMessage } from '@/services/authService'
@@ -29,6 +30,8 @@ export default function AdminContactMessages() {
   const [viewing, setViewing] = useState<ContactMessage | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ContactMessage | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const [sendingReply, setSendingReply] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -62,6 +65,7 @@ export default function AdminContactMessages() {
 
   const openMessage = async (msg: ContactMessage) => {
     setViewing(msg)
+    setReplyText('')
     if (!msg.isRead) {
       try {
         const updated = await markContactMessageRead(msg.id)
@@ -69,6 +73,26 @@ export default function AdminContactMessages() {
       } catch {
         // เงียบไว้ — ไม่กระทบการดูข้อความ แค่สถานะอ่านแล้วอาจไม่อัปเดต
       }
+    }
+  }
+
+  const handleSendReply = async () => {
+    if (!viewing || !replyText.trim()) return
+    setSendingReply(true)
+    try {
+      const updated = await replyToContactMessage(viewing.id, replyText.trim())
+      setMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)))
+      setViewing(updated)
+      setReplyText('')
+      if (updated.emailSent) {
+        toast.success('ส่งอีเมลตอบกลับเรียบร้อยแล้ว')
+      } else {
+        toast('บันทึกคำตอบแล้ว แต่ยังไม่ได้ส่งอีเมล (ระบบยังไม่ได้ตั้งค่า SMTP)', { icon: '⚠️' })
+      }
+    } catch (err) {
+      toast.error(extractErrorMessage(err, 'ส่งคำตอบไม่สำเร็จ'))
+    } finally {
+      setSendingReply(false)
     }
   }
 
@@ -184,17 +208,28 @@ export default function AdminContactMessages() {
                       </td>
                       <td className="px-5 py-4 text-[13px] text-[#475569] whitespace-nowrap">{formatThaiDate(msg.createdAt)}</td>
                       <td className="px-5 py-4">
-                        <span
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold whitespace-nowrap"
-                          style={msg.isRead
-                            // แถวอ่านแล้วเป็นลายสลับสีตามปกติ (ขาว/เทาอ่อน) — ป้ายจึงสลับตามแถวได้
-                            ? { color: '#94A3B8', background: idx % 2 === 0 ? '#F1F5F9' : '#FFFFFF', border: '1.5px solid #E2E8F0' }
-                            // แถวยังไม่อ่านพื้นหลังเป็นสีทึม (ไม่ใช่ขาว) เสมอ ไม่ว่าแถวคู่หรือคี่ ป้ายจึงเป็นสีขาวเสมอให้ตัดกับพื้นแถว
-                            : { color: '#1E5AA8', background: '#FFFFFF', border: '1.5px solid #BFDBFE' }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: msg.isRead ? '#CBD5E1' : '#1E5AA8' }} />
-                          {msg.isRead ? 'อ่านแล้ว' : 'ยังไม่อ่าน'}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold whitespace-nowrap"
+                            style={msg.isRead
+                              // แถวอ่านแล้วเป็นลายสลับสีตามปกติ (ขาว/เทาอ่อน) — ป้ายจึงสลับตามแถวได้
+                              ? { color: '#94A3B8', background: idx % 2 === 0 ? '#F1F5F9' : '#FFFFFF', border: '1.5px solid #E2E8F0' }
+                              // แถวยังไม่อ่านพื้นหลังเป็นสีทึม (ไม่ใช่ขาว) เสมอ ไม่ว่าแถวคู่หรือคี่ ป้ายจึงเป็นสีขาวเสมอให้ตัดกับพื้นแถว
+                              : { color: '#1E5AA8', background: '#FFFFFF', border: '1.5px solid #BFDBFE' }}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: msg.isRead ? '#CBD5E1' : '#1E5AA8' }} />
+                            {msg.isRead ? 'อ่านแล้ว' : 'ยังไม่อ่าน'}
+                          </span>
+                          {msg.adminReply && (
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-semibold whitespace-nowrap"
+                              style={{ color: '#15803D', background: '#F0FDF4', border: '1.5px solid #BBF7D0' }}
+                            >
+                              <CheckCircle2 size={12} />
+                              ตอบแล้ว
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -313,17 +348,56 @@ export default function AdminContactMessages() {
                   </p>
                   <p className="text-[15px] text-black leading-[1.8] whitespace-pre-wrap">{viewing.message}</p>
                 </div>
+
+                {viewing.adminReply && (
+                  <div
+                    className="rounded-2xl p-5"
+                    style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderLeft: '4px solid #16A34A' }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#15803D]">
+                        <CheckCircle2 size={12} />
+                        ตอบกลับแล้ว {viewing.repliedBy ? `โดย ${viewing.repliedBy}` : ''}
+                      </p>
+                      {viewing.repliedAt && (
+                        <span className="text-[11px] text-[#4D7C0F]">{formatThaiDate(viewing.repliedAt)}</span>
+                      )}
+                    </div>
+                    <p className="text-[14px] text-[#14532D] leading-[1.8] whitespace-pre-wrap">{viewing.adminReply}</p>
+                  </div>
+                )}
+
+                {/* Reply Composer */}
+                <div>
+                  <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8] mb-2">
+                    <Reply size={12} />
+                    {viewing.adminReply ? 'ส่งคำตอบเพิ่มเติม' : 'ตอบกลับข้อความนี้'}
+                  </p>
+                  <textarea
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="พิมพ์ข้อความตอบกลับถึงผู้ส่ง..."
+                    rows={4}
+                    className="w-full px-4 py-3 rounded-xl text-[14px] text-[#14213D] outline-none resize-none transition-shadow focus:shadow-[0_0_0_3px_rgba(11,46,94,0.12)]"
+                    style={{ border: '1.5px solid #E2E8F0', background: '#fff' }}
+                  />
+                  <p className="flex items-center gap-1.5 text-[11px] text-[#94A3B8] mt-1.5">
+                    <AlertTriangle size={11} />
+                    ระบบจะส่งคำตอบนี้ไปยังอีเมล {viewing.email} โดยอัตโนมัติ
+                  </p>
+                </div>
               </div>
 
               <div className="p-5 pt-4 flex justify-end" style={{ borderTop: '1px solid #F1F5F9' }}>
-                <a
-                  href={`mailto:${viewing.email}${viewing.subject ? `?subject=${encodeURIComponent('Re: ' + viewing.subject)}` : ''}`}
-                  className="inline-flex items-center gap-2 text-[13px] font-semibold text-white rounded-xl transition-shadow hover:shadow-lg"
+                <button
+                  onClick={handleSendReply}
+                  disabled={!replyText.trim() || sendingReply}
+                  className="inline-flex items-center gap-2 text-[13px] font-semibold text-white rounded-xl transition-shadow hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
                   style={{ padding: '10px 20px', background: `linear-gradient(135deg, ${THEME}, #1E5AA8)`, boxShadow: `0 8px 20px ${THEME}30` }}
                 >
-                  <Reply size={15} />
-                  ตอบกลับทางอีเมล
-                </a>
+                  <Send size={15} />
+                  {sendingReply ? 'กำลังส่ง...' : 'ส่งคำตอบ'}
+                </button>
               </div>
             </motion.div>
           </motion.div>

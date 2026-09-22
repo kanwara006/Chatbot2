@@ -7,8 +7,6 @@ from app.schemas.chat import (
     ChatMessageRequest,
     MessageResponse,
     MessageSourceResponse,
-    MessageFeedbackCreate,
-    MessageFeedbackResponse,
     ConversationCreate,
     ConversationResponse,
     ConversationDetailResponse
@@ -36,8 +34,6 @@ __all__ = [
     "ChatMessageRequest",
     "MessageResponse",
     "MessageSourceResponse",
-    "MessageFeedbackCreate",
-    "MessageFeedbackResponse",
     "ConversationCreate",
     "ConversationResponse",
     "ConversationDetailResponse",

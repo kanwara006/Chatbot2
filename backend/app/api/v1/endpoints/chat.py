@@ -4,14 +4,12 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user_optional
 from app.core.timezone import now_th
-from app.models.chat import Conversation, Message, MessageSource, MessageFeedback
+from app.models.chat import Conversation, Message, MessageSource
 from app.models.user import User
 from app.schemas.chat import (
     ChatMessageRequest,
     MessageResponse,
     MessageSourceResponse,
-    MessageFeedbackCreate,
-    MessageFeedbackResponse,
     ConversationResponse,
     ConversationDetailResponse
 )
@@ -160,7 +158,6 @@ def send_message(
                 )
                 for src in sources_data
             ],
-            feedback=None,
         )
 
     # 1. Get or create conversation (owned by the signed-in user only)
@@ -216,32 +213,3 @@ def send_message(
     db.refresh(ai_msg)
 
     return ai_msg
-
-
-@router.post("/feedback/{message_id}", response_model=MessageFeedbackResponse)
-def submit_feedback(
-    message_id: int,
-    feedback_in: MessageFeedbackCreate,
-    db: Session = Depends(get_db)
-):
-    msg = db.query(Message).filter(Message.id == message_id).first()
-    if not msg:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
-
-    existing = db.query(MessageFeedback).filter(MessageFeedback.message_id == message_id).first()
-    if existing:
-        existing.rating = feedback_in.rating
-        existing.comment = feedback_in.comment
-        db.commit()
-        db.refresh(existing)
-        return existing
-
-    feedback = MessageFeedback(
-        message_id=message_id,
-        rating=feedback_in.rating,
-        comment=feedback_in.comment
-    )
-    db.add(feedback)
-    db.commit()
-    db.refresh(feedback)
-    return feedback

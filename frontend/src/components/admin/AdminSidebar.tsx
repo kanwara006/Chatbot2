@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Megaphone, HelpCircle, FolderOpen,
-  Users, BarChart3, ClipboardCheck, ChevronLeft, ChevronRight, Mail,
+  Users, BarChart3, ChevronLeft, ChevronRight, Mail,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 
@@ -28,7 +28,6 @@ const navSections = [
       { to: '/admin/users', icon: Users, label: 'จัดการผู้ใช้', end: false },
       { to: '/admin/contact', icon: Mail, label: 'จัดการข้อความติดต่อ', end: false },
       { to: '/admin/reports', icon: BarChart3, label: 'รายงานและสถิติ', end: false },
-      { to: '/admin/evaluation', icon: ClipboardCheck, label: 'การประเมินคำตอบ', end: false },
     ],
   },
 ]

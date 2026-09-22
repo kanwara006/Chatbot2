@@ -19,6 +19,9 @@ export interface ContactMessage {
   message: string
   isRead: boolean
   createdAt: string
+  adminReply?: string
+  repliedAt?: string
+  repliedBy?: string
 }
 
 function mapContactMessage(raw: any): ContactMessage {
@@ -31,6 +34,9 @@ function mapContactMessage(raw: any): ContactMessage {
     message: raw.message,
     isRead: raw.is_read,
     createdAt: raw.created_at,
+    adminReply: raw.admin_reply || undefined,
+    repliedAt: raw.replied_at || undefined,
+    repliedBy: raw.replied_by || undefined,
   }
 }
 
@@ -62,4 +68,13 @@ export async function deleteContactMessage(id: number): Promise<void> {
   })
   invalidateCache('contact-messages')
   window.dispatchEvent(new Event('contact-messages-updated'))
+}
+
+export async function replyToContactMessage(id: number, reply: string): Promise<ContactMessage & { emailSent: boolean }> {
+  const response = await axios.post(`${API_BASE_URL}/contact/${id}/reply`, { reply }, {
+    headers: getAuthHeader(),
+  })
+  invalidateCache('contact-messages')
+  window.dispatchEvent(new Event('contact-messages-updated'))
+  return { ...mapContactMessage(response.data), emailSent: response.data.email_sent }
 }

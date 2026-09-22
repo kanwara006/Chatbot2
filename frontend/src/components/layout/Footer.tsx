@@ -81,10 +81,10 @@ export default function Footer() {
               <li className="flex items-center gap-2.5">
                 <Mail size={16} className="text-white/60 flex-shrink-0" />
                 <a
-                  href="mailto:Studentloan@psu.ac.th"
+                  href="mailto:studentloanpsu@gmail.com"
                   className="text-white/75 hover:text-white transition-colors break-all"
                 >
-                  Studentloan@psu.ac.th
+                  studentloanpsu@gmail.com
                 </a>
               </li>
             </ul>

@@ -24,13 +24,12 @@ export default function ChatPage() {
     openConversation,
     removeConversation,
     sendMessage,
-    submitFeedback,
   } = useChat()
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
       {/* ── 1. Top Navbar: PSU Branding Header (Matched with Reference Image) ── */}
-      <header className="bg-white border-b border-[#E2E8F0] px-4 sm:px-6 py-2.5 flex items-center justify-between z-30 flex-shrink-0">
+      <header className="hidden sm:flex bg-white border-b border-[#E2E8F0] px-4 sm:px-6 py-2.5 items-center justify-between z-30 flex-shrink-0">
         <Link to="/" className="flex items-center gap-3 group" aria-label="กลับหน้าแรก">
           <Logo size={40} />
           <div className="leading-tight">
@@ -49,7 +48,7 @@ export default function ChatPage() {
 
         {/* Desktop Sidebar */}
         {sidebarOpen ? (
-          <div className="hidden md:flex flex-shrink-0 h-full">
+          <div className="hidden lg:flex flex-shrink-0 h-full">
             <ChatSidebar
               conversations={conversations}
               activeConversationId={activeConversationId}
@@ -61,7 +60,7 @@ export default function ChatPage() {
           </div>
         ) : (
           /* Expand Sidebar Button */
-          <div className="hidden md:flex items-start p-2 bg-[#062E66] h-full z-20">
+          <div className="hidden lg:flex items-start p-2 bg-[#062E66] h-full z-20">
             <button
               onClick={() => setSidebarOpen(true)}
               className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
@@ -78,14 +77,14 @@ export default function ChatPage() {
           {mobileSidebarOpen && (
             <>
               <motion.div
-                className="fixed inset-0 z-40 md:hidden bg-[#062E66]/60 backdrop-blur-sm"
+                className="fixed inset-0 z-40 lg:hidden bg-[#062E66]/60 backdrop-blur-sm"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setMobileSidebarOpen(false)}
               />
               <motion.div
-                className="fixed top-0 left-0 z-50 h-full md:hidden"
+                className="fixed top-0 left-0 z-50 h-full lg:hidden"
                 initial={{ x: -280 }}
                 animate={{ x: 0 }}
                 exit={{ x: -280 }}
@@ -109,7 +108,7 @@ export default function ChatPage() {
           {/* Mobile open button */}
           <button
             id="mobile-sidebar-toggle"
-            className="md:hidden absolute top-3.5 left-4 z-20 p-2 rounded-lg bg-white border border-[#E2E8F0] shadow-sm text-[#062E66]"
+            className="lg:hidden absolute top-3.5 left-4 z-20 p-2 rounded-lg bg-white border border-[#E2E8F0] shadow-sm text-[#062E66]"
             onClick={() => setMobileSidebarOpen(true)}
             aria-label="เปิดประวัติการสนทนา"
           >
@@ -121,7 +120,6 @@ export default function ChatPage() {
             isLoading={isLoading}
             messagesEndRef={messagesEndRef as React.RefObject<HTMLDivElement>}
             onSend={sendMessage}
-            onFeedback={submitFeedback}
             onReset={createNewConversation}
           />
         </div>

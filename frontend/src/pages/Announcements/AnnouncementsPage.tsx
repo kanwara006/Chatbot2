@@ -99,9 +99,9 @@ export default function AnnouncementsPage() {
       {/* ── 2. Floating Search & Category Filter Card ─────────────── */}
       <section className="relative z-20" style={{ marginTop: '-32px' }}>
         <div className="container-main">
-          <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(6,46,102,0.08)] border border-[#DDE2EA] flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Search input */}
-            <div className="relative w-full md:w-80">
+          <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(6,46,102,0.08)] border border-[#DDE2EA] flex flex-col gap-4">
+            {/* Search input — full width, on top */}
+            <div className="relative w-full">
               <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
               <input
                 id="search-announcements"
@@ -113,8 +113,8 @@ export default function AnnouncementsPage() {
               />
             </div>
 
-            {/* Category Filter Chips */}
-            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            {/* Category Filter Chips — row below the search box */}
+            <div className="flex flex-wrap items-center gap-2 w-full">
               <button
                 onClick={() => setActiveCategory('all')}
                 className={`

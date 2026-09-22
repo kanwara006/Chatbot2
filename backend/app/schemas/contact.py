@@ -20,6 +20,17 @@ class ContactMessageResponse(BaseModel):
     message: str
     is_read: bool
     created_at: datetime
+    admin_reply: Optional[str] = None
+    replied_at: Optional[datetime] = None
+    replied_by: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+
+class ContactReplyCreate(BaseModel):
+    reply: str
+
+
+class ContactReplyResponse(ContactMessageResponse):
+    email_sent: bool
