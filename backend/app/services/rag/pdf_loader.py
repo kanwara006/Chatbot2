@@ -1,7 +1,6 @@
 import os
 import io
 import logging
-from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
 
 logger = logging.getLogger(__name__)
@@ -85,48 +84,36 @@ def load_single_pdf(pdf_path: str):
     file_name = os.path.basename(pdf_path)
     abs_pdf_path = os.path.abspath(pdf_path)
 
-    text_by_page = {}
-    try:
-        loader = PyPDFLoader(abs_pdf_path)
-        for doc in loader.load():
-            page_num = doc.metadata.get("page", 0)
-            if doc.page_content.strip():
-                text_by_page[page_num] = doc.page_content.strip()
-    except Exception as e:
-        logger.warning(f"PyPDFLoader อ่าน {file_name} ไม่สำเร็จ: {e}")
-
-    fitz = None
+    # ใช้ pymupdf (fitz) อย่างเดียวสำหรับทั้ง text layer, OCR รูปภาพ และลิงก์ แทนการพึ่งพา
+    # langchain-community's PyPDFLoader เพิ่ม เพราะแพ็กเกจนั้นมี __init__ ที่ import
+    # dependency หนักๆ (tiktoken/transformers/numpy) โดยไม่จำเป็น ทำให้กิน RAM เกิน 350MB
+    # เปล่าๆ ซึ่งพังการ deploy บน host ที่จำกัด RAM ต่ำอย่าง Render free tier
     try:
         import fitz  # pymupdf
     except Exception as e:
         logger.warning(f"ไม่สามารถโหลด pymupdf เพื่อประมวลผล {file_name}: {e}")
+        return documents
 
-    page_count = 0
-    pdf_document = None
-    if fitz is not None:
-        try:
-            pdf_document = fitz.open(abs_pdf_path)
-            page_count = len(pdf_document)
-        except Exception as e:
-            logger.warning(f"ไม่สามารถเปิด {file_name} ด้วย pymupdf: {e}")
-    if page_count == 0:
-        page_count = len(text_by_page)
+    try:
+        pdf_document = fitz.open(abs_pdf_path)
+    except Exception as e:
+        logger.warning(f"ไม่สามารถเปิด {file_name} ด้วย pymupdf: {e}")
+        return documents
+
+    page_count = len(pdf_document)
 
     for page_idx in range(page_count):
-        text_content = text_by_page.get(page_idx, "")
+        page = pdf_document[page_idx]
+        text_content = page.get_text().strip()
 
-        image_ocr_text = ""
-        link_text = ""
-        if pdf_document is not None:
-            page = pdf_document[page_idx]
-            image_ocr_text = _ocr_page_images(pdf_document, page_idx, file_name)
-            if image_ocr_text:
-                logger.info(
-                    f"✅ OCR รูปภาพในหน้า {page_idx + 1} ของ {file_name} สำเร็จ ({len(image_ocr_text)} ตัวอักษร)"
-                )
-            link_text = _extract_page_links(page)
-            if link_text:
-                logger.info(f"🔗 พบลิงก์ในหน้า {page_idx + 1} ของ {file_name}")
+        image_ocr_text = _ocr_page_images(pdf_document, page_idx, file_name)
+        if image_ocr_text:
+            logger.info(
+                f"✅ OCR รูปภาพในหน้า {page_idx + 1} ของ {file_name} สำเร็จ ({len(image_ocr_text)} ตัวอักษร)"
+            )
+        link_text = _extract_page_links(page)
+        if link_text:
+            logger.info(f"🔗 พบลิงก์ในหน้า {page_idx + 1} ของ {file_name}")
 
         parts = [p for p in (text_content, image_ocr_text, link_text) if p]
         combined_content = "\n\n".join(parts)
@@ -142,8 +129,7 @@ def load_single_pdf(pdf_path: str):
                 )
             )
 
-    if pdf_document is not None:
-        pdf_document.close()
+    pdf_document.close()
 
     if not documents:
         logger.warning(f"⚠️ {file_name} ไม่มีข้อความที่อ่านได้เลย (ทั้ง text layer และ OCR)")
