@@ -1,63 +1,20 @@
-from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from google import genai
 import time
 import logging
 
 logger = logging.getLogger(__name__)
 
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 100
-_SEPARATORS = ["\n\n", "\n", " "]
-
-
-def _break_down(piece: str, separators: list) -> list:
-    """Recursively split `piece` on the first separator that appears in it,
-    falling back to a hard character-width slice once separators run out."""
-    if len(piece) <= CHUNK_SIZE:
-        return [piece]
-    if not separators:
-        return [piece[i:i + CHUNK_SIZE] for i in range(0, len(piece), CHUNK_SIZE)]
-
-    sep = separators[0]
-    parts = [p for p in piece.split(sep) if p] if sep in piece else [piece]
-    if len(parts) == 1:
-        return _break_down(piece, separators[1:])
-
-    result = []
-    for part in parts:
-        result.extend(_break_down(part, separators[1:]) if len(part) > CHUNK_SIZE else [part])
-    return result
-
-
-def _split_text(text: str) -> list:
-    """Minimal recursive-character text splitter (no langchain-text-splitters
-    dependency, whose package __init__ eagerly imports sentence-transformers/torch
-    and blows well past low-memory hosting limits like Render's free tier)."""
-    pieces = _break_down(text, _SEPARATORS)
-
-    chunks = []
-    buffer = ""
-    for piece in pieces:
-        candidate = f"{buffer} {piece}".strip() if buffer else piece
-        if len(candidate) <= CHUNK_SIZE:
-            buffer = candidate
-        else:
-            if buffer:
-                chunks.append(buffer)
-                buffer = (buffer[-CHUNK_OVERLAP:] + " " + piece).strip() if CHUNK_OVERLAP else piece
-            else:
-                buffer = piece
-    if buffer:
-        chunks.append(buffer)
-    return chunks
-
 
 def split_into_chunks(documents):
     """แบ่งเอกสาร (list ของ langchain Document ต่อหน้า) เป็น chunk ย่อยสำหรับทำ embedding"""
-    chunks = []
-    for doc in documents:
-        for piece in _split_text(doc.page_content):
-            chunks.append(Document(page_content=piece, metadata=dict(doc.metadata)))
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=100,
+        separators=["\n\n", "\n", " ", ""]
+    )
+
+    chunks = text_splitter.split_documents(documents)
 
     for index, chunk in enumerate(chunks):
         chunk.metadata["chunk_id"] = index + 1
