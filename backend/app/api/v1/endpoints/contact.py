@@ -3,9 +3,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_admin_user
+from app.core.timezone import now_th
 from app.models.contact import ContactMessage
 from app.models.user import User
-from app.schemas.contact import ContactMessageCreate, ContactMessageResponse
+from app.schemas.contact import ContactMessageCreate, ContactMessageResponse, ContactReplyCreate, ContactReplyResponse
+from app.services.email import send_email, build_contact_reply_email
 
 router = APIRouter()
 
@@ -44,6 +46,30 @@ def mark_contact_message_read(
     db.commit()
     db.refresh(item)
     return item
+
+
+@router.post("/{message_id}/reply", response_model=ContactReplyResponse)
+def reply_to_contact_message(
+    message_id: int,
+    payload: ContactReplyCreate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user)
+):
+    item = db.query(ContactMessage).filter(ContactMessage.id == message_id).first()
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact message not found")
+
+    subject, body = build_contact_reply_email(item.full_name, item.subject or "", item.message, payload.reply)
+    email_sent = send_email(item.email, subject, body)
+
+    item.admin_reply = payload.reply
+    item.replied_at = now_th()
+    item.replied_by = f"{admin.first_name} {admin.last_name}".strip()
+    item.is_read = True
+    db.commit()
+    db.refresh(item)
+
+    return ContactReplyResponse(**ContactMessageResponse.model_validate(item).model_dump(), email_sent=email_sent)
 
 
 @router.delete("/{message_id}", status_code=status.HTTP_204_NO_CONTENT)

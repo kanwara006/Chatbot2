@@ -29,7 +29,6 @@ import AdminCategories        from '@/pages/Admin/AdminCategories'
 import AdminCategoryForm      from '@/pages/Admin/AdminCategoryForm'
 import AdminUsers             from '@/pages/Admin/AdminUsers'
 import AdminReports           from '@/pages/Admin/AdminReports'
-import AdminEvaluation        from '@/pages/Admin/AdminEvaluation'
 import AdminContactMessages   from '@/pages/Admin/AdminContactMessages'
 import RequireAdmin           from '@/components/admin/RequireAdmin'
 import RequireAuth            from '@/components/RequireAuth'
@@ -85,7 +84,6 @@ export default function AppRouter() {
           <Route path="users"                   element={<AdminUsers />} />
           <Route path="contact"                 element={<AdminContactMessages />} />
           <Route path="reports"                 element={<AdminReports />} />
-          <Route path="evaluation"              element={<AdminEvaluation />} />
         </Route>
       </Route>
 

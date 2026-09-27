@@ -9,13 +9,12 @@ import Logo from '@/components/common/Logo'
 
 interface ChatMessageProps {
   message:    Message
-  onFeedback: (id: number, rating: 'like' | 'dislike') => void
 }
 
 /**
  * ChatMessage — แสดงข้อความ 1 ข้อความ (User หรือ AI) ตามแบบในภาพตัวอย่าง
  */
-export default function ChatMessage({ message, onFeedback }: ChatMessageProps) {
+export default function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === 'user'
 
   // Format timestamp (or fallback to thai formatted string)
@@ -140,7 +139,7 @@ export default function ChatMessage({ message, onFeedback }: ChatMessageProps) {
                   </p>
                 ),
                 strong: ({ children }) => (
-                  <strong className="font-semibold text-[#062E66]">{children}</strong>
+                  <strong className="font-bold text-[#062E66]">{children}</strong>
                 ),
                 blockquote: ({ children }) => (
                   <blockquote className="my-2 pl-3 py-1 text-xs text-[#64748B] border-l-2 border-[#0B4DBA] bg-[#F8FAFC] rounded-r-lg">
@@ -164,7 +163,6 @@ export default function ChatMessage({ message, onFeedback }: ChatMessageProps) {
           messageId={message.id}
           content={message.content}
           timestamp={timeStr}
-          onFeedback={onFeedback}
         />
       </div>
     </motion.div>

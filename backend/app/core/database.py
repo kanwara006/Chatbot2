@@ -7,6 +7,8 @@ from app.core.config import settings
 connect_args = {}
 if settings.DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
+else:
+    connect_args = {"connect_timeout": 10}
 
 engine = create_engine(
     settings.DATABASE_URL,

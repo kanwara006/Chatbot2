@@ -5,7 +5,6 @@ import {
   fetchConversations,
   fetchConversationMessages,
   deleteConversationRemote,
-  submitMessageFeedback,
   generateId,
 } from '@/services/chatService'
 import { useAuth } from '@/context/AuthContext'
@@ -116,10 +115,6 @@ export function useChat() {
     [activeConversationId, isLoading, isAuthenticated, scrollToBottom]
   )
 
-  const submitFeedback = useCallback((messageId: number, rating: 'like' | 'dislike') => {
-    submitMessageFeedback(messageId, rating)
-  }, [])
-
   return {
     conversations,
     activeConversationId,
@@ -132,6 +127,5 @@ export function useChat() {
     openConversation,
     removeConversation,
     sendMessage,
-    submitFeedback,
   }
 }

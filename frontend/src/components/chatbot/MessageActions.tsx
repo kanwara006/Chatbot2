@@ -1,12 +1,11 @@
 import { useState, useCallback } from 'react'
-import { Copy, ThumbsUp, ThumbsDown, Download, Check } from 'lucide-react'
+import { Copy, Download, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface MessageActionsProps {
   messageId:       number
   content:         string
   timestamp?:      string
-  onFeedback:      (id: number, rating: 'like' | 'dislike') => void
 }
 
 /**
@@ -16,10 +15,8 @@ export default function MessageActions({
   messageId,
   content,
   timestamp,
-  onFeedback,
 }: MessageActionsProps) {
-  const [copied,   setCopied]   = useState(false)
-  const [feedback, setFeedback] = useState<'like' | 'dislike' | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(content)
@@ -27,15 +24,6 @@ export default function MessageActions({
     toast.success('คัดลอกข้อความแล้ว')
     setTimeout(() => setCopied(false), 2000)
   }, [content])
-
-  const handleFeedback = useCallback(
-    (rating: 'like' | 'dislike') => {
-      setFeedback(rating)
-      onFeedback(messageId, rating)
-      toast.success(rating === 'like' ? 'ขอบคุณสำหรับ Feedback 👍' : 'ขอบคุณ เราจะปรับปรุงต่อไป')
-    },
-    [messageId, onFeedback]
-  )
 
   const handleDownload = useCallback(() => {
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
@@ -77,39 +65,6 @@ export default function MessageActions({
         >
           <Download size={12} />
           <span>ดาวน์โหลด</span>
-        </button>
-
-        {/* Separator */}
-        <span className="text-[#CBD5E1]">|</span>
-
-        {/* Like */}
-        <button
-          id={`msg-like-${messageId}`}
-          onClick={() => handleFeedback('like')}
-          disabled={feedback !== null}
-          className={`p-1 rounded transition-colors ${
-            feedback === 'like'
-              ? 'text-green-600'
-              : 'text-[#94A3B8] hover:text-green-600 disabled:opacity-50'
-          }`}
-          title="คำตอบนี้มีประโยชน์"
-        >
-          <ThumbsUp size={13} />
-        </button>
-
-        {/* Dislike */}
-        <button
-          id={`msg-dislike-${messageId}`}
-          onClick={() => handleFeedback('dislike')}
-          disabled={feedback !== null}
-          className={`p-1 rounded transition-colors ${
-            feedback === 'dislike'
-              ? 'text-red-500'
-              : 'text-[#94A3B8] hover:text-red-500 disabled:opacity-50'
-          }`}
-          title="คำตอบนี้ไม่ถูกต้อง"
-        >
-          <ThumbsDown size={13} />
         </button>
       </div>
     </div>

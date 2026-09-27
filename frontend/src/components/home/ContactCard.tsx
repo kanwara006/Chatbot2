@@ -46,8 +46,8 @@ export default function ContactCard() {
             </div>
             <div>
               <p className="text-white/50 text-[11px]">อีเมล</p>
-              <a href="mailto:Studentloan@psu.ac.th" className="text-white font-medium hover:text-[#93C5FD] transition-colors break-all">
-                Studentloan@psu.ac.th
+              <a href="mailto:studentloanpsu@gmail.com" className="text-white font-medium hover:text-[#93C5FD] transition-colors break-all">
+                studentloanpsu@gmail.com
               </a>
             </div>
           </div>
