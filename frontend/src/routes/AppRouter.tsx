@@ -5,6 +5,8 @@ import FAQPage            from '@/pages/FAQ/FAQPage'
 import AnnouncementsPage  from '@/pages/Announcements/AnnouncementsPage'
 import ContactPage        from '@/pages/Contact/ContactPage'
 import LoginPage          from '@/pages/Login/LoginPage'
+import ForgotPasswordPage from '@/pages/Login/ForgotPasswordPage'
+import ResetPasswordPage  from '@/pages/Login/ResetPasswordPage'
 import RegisterPage       from '@/pages/Register/RegisterPage'
 import ProfilePage        from '@/pages/Profile/ProfilePage'
 
@@ -48,6 +50,8 @@ export default function AppRouter() {
       <Route path="/announcements"       element={<AnnouncementsPage />} />
       <Route path="/contact"             element={<ContactPage />} />
       <Route path="/login"               element={<LoginPage />} />
+      <Route path="/forgot-password"     element={<ForgotPasswordPage />} />
+      <Route path="/reset-password"      element={<ResetPasswordPage />} />
       <Route path="/register"            element={<RegisterPage />} />
 
       {/* Information Pages */}

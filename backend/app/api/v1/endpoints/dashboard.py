@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.core.security import get_current_admin_user
 from app.core.timezone import now_th
 from app.models.user import User
-from app.models.chat import Conversation, Message, MessageSource, MessageFeedback
+from app.models.chat import Conversation, Message, MessageSource
 from app.models.document import Document
 from app.models.announcement import Announcement
 from app.models.faq import FAQ
@@ -16,14 +16,6 @@ from app.models.category import Category
 router = APIRouter()
 
 THAI_WEEKDAYS = ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์", "อาทิตย์"]
-
-
-def _satisfaction_rate(db: Session) -> float:
-    total = db.query(MessageFeedback).count()
-    if total == 0:
-        return 0.0
-    likes = db.query(MessageFeedback).filter(MessageFeedback.rating == "like").count()
-    return round(likes / total * 100, 1)
 
 
 @router.get("/stats", response_model=Dict[str, Any])
@@ -49,7 +41,6 @@ def get_dashboard_stats(
         "total_documents": total_document_count,
         "announcements": announcement_count,
         "faqs": faq_count,
-        "positive_rate": _satisfaction_rate(db),
     }
 
 
@@ -189,14 +180,13 @@ def get_reports(
         .all()
     )
     top_categories = [
-        {"category_id": r.id, "name": r.name, "count": r.count, "satisfaction": _satisfaction_rate(db)}
+        {"category_id": r.id, "name": r.name, "count": r.count}
         for r in top_categories_rows
     ]
 
     return {
         "total_questions": total_questions,
         "success_rate": success_rate,
-        "avg_satisfaction": _satisfaction_rate(db),
         "usage_trend": usage_trend,
         "top_categories": top_categories,
     }

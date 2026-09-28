@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     # Staff/admin self-registration requires this shared code (set by the fund office)
     ADMIN_REGISTER_CODE: str = "PSU-SLF-STAFF-2569"
 
+    # ใช้ประกอบลิงก์ในอีเมล ให้ชี้ไปหน้าเว็บฝั่ง frontend ที่ถูกต้อง
+    FRONTEND_URL: str = "http://localhost:5173"
+    RESET_PASSWORD_OTP_EXPIRE_MINUTES: int = 10
+    RESET_PASSWORD_MAX_ATTEMPTS: int = 5
+
     # Database
     DATABASE_URL: str = "sqlite:///./psu_slf.db"
 

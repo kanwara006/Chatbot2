@@ -78,6 +78,20 @@ export function getAuthHeader(): Record<string, string> {
   return auth ? { Authorization: `Bearer ${auth.accessToken}` } : {}
 }
 
+export async function forgotPassword(email: string): Promise<string> {
+  const response = await axios.post(`${API_BASE_URL}/auth/forgot-password`, { email })
+  return response.data.message as string
+}
+
+export async function resetPassword(email: string, otp: string, newPassword: string): Promise<string> {
+  const response = await axios.post(`${API_BASE_URL}/auth/reset-password`, {
+    email,
+    otp,
+    new_password: newPassword,
+  })
+  return response.data.message as string
+}
+
 export function extractErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) {
     const detail = error.response?.data?.detail

@@ -110,6 +110,11 @@ export default function AdminLoginPage() {
               {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
+          <div className="text-right mt-1.5">
+            <Link to="/forgot-password" className="text-xs font-medium text-[#6D28D9] hover:underline">
+              ลืมรหัสผ่าน?
+            </Link>
+          </div>
         </div>
 
         <motion.button

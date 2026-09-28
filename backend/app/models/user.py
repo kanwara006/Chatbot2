@@ -20,6 +20,10 @@ class User(Base):
     created_at = Column(DateTime, default=now_th, nullable=False)
     updated_at = Column(DateTime, default=now_th, onupdate=now_th, nullable=False)
 
+    reset_token = Column(String(255), nullable=True)
+    reset_token_expires = Column(DateTime, nullable=True)
+    reset_attempts = Column(Integer, default=0, nullable=False)
+
     # Relationships
     conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
     documents = relationship("Document", back_populates="uploader")

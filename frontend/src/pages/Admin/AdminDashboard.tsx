@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { MessageSquare, CheckCircle2, Smile, FileText, MessageCircleQuestion, TrendingUp, PieChart as PieChartIcon, Clock, FolderOpen } from 'lucide-react'
+import { MessageSquare, CheckCircle2, FileText, MessageCircleQuestion, TrendingUp, PieChart as PieChartIcon, Clock, FolderOpen } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import {
@@ -15,7 +15,6 @@ import { formatThaiDate } from '@/utils/date'
 import AdminStatCard from '@/components/admin/AdminStatCard'
 import AdminLoadingState from '@/components/admin/AdminLoadingState'
 import AdminEmptyState from '@/components/admin/AdminEmptyState'
-import mascotImg from '@/assets/dashboard-mascot.png'
 
 const PIE_COLORS = ['#1E5AA8', '#059669', '#D97706', '#7C3AED', '#EF4444', '#94A3B8']
 
@@ -83,14 +82,6 @@ export default function AdminDashboard() {
             <p className="text-[13px] text-white/75 mt-1.5">ภาพรวมการใช้งานระบบแชทบอท กยศ.</p>
           </div>
         </div>
-
-        {/* AI mascot perched on top of the banner */}
-        <img
-          src={mascotImg}
-          alt="ผู้ช่วย AI"
-          className="absolute -top-11 right-6 sm:right-12 pointer-events-none select-none"
-          style={{ width: 132, filter: 'drop-shadow(0 10px 16px rgba(11,46,94,0.35))' }}
-        />
       </div>
 
       {loading || !stats ? (
@@ -98,10 +89,9 @@ export default function AdminDashboard() {
       ) : (
       <>
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <AdminStatCard icon={MessageSquare} label="คำถามทั้งหมด" value={stats.messages.toLocaleString()} color="#1E5AA8" delay={0} variant="vivid" />
           <AdminStatCard icon={CheckCircle2} label="ตอบคำถามสำเร็จ" value={stats.answered.toLocaleString()} color="#0E7490" delay={0.05} variant="vivid" />
-          <AdminStatCard icon={Smile} label="ความพึงพอใจ" value={`${stats.positiveRate}%`} color="#4F46E5" delay={0.1} variant="vivid" />
           <AdminStatCard icon={FileText} label="เอกสารพร้อมใช้งาน" value={`${stats.documents}/${stats.totalDocuments}`} color="#0369A1" delay={0.15} variant="vivid" />
         </div>
 

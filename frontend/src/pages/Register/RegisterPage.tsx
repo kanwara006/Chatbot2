@@ -82,6 +82,7 @@ export default function RegisterPage() {
     <AuthSplitLayout
       headline={<>เริ่มต้นใช้งาน<br /><span className="text-[#93C5FD]">PSU SLF AI</span></>}
       description="ระบบผู้ช่วยอัจฉริยะสำหรับกองทุนเงินให้กู้ยืมเพื่อการศึกษา มหาวิทยาลัยสงขลานครินทร์ สมัครสมาชิกเพื่อเข้าถึงข้อมูลและบันทึกประวัติการสอบถาม"
+      hideTopBranding
     >
       <div>
           {/* Header */}
