@@ -28,3 +28,17 @@ class AdminRegisterRequest(BaseModel):
     email: EmailStr
     password: str
     staff_code: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str
+
+
+class MessageResponse(BaseModel):
+    message: str

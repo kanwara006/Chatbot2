@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { MessageSquare, CheckCircle2, Smile, FolderSearch, BarChart3 } from 'lucide-react'
+import { MessageSquare, CheckCircle2, FolderSearch, BarChart3 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -37,10 +37,9 @@ export default function AdminReports() {
       ) : (
       <>
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <AdminStatCard icon={MessageSquare} label="คำถามทั้งหมด" value={data.totalQuestions.toLocaleString()} color="#4F46E5" delay={0} variant="vivid" />
           <AdminStatCard icon={CheckCircle2} label="อัตราการตอบสำเร็จ" value={`${data.successRate}%`} color="#1E5AA8" delay={0.05} variant="vivid" />
-          <AdminStatCard icon={Smile} label="ความพึงพอใจเฉลี่ย" value={`${data.avgSatisfaction}%`} color="#0E7490" delay={0.1} variant="vivid" />
         </div>
 
         {/* Usage trend bar chart */}
@@ -72,7 +71,7 @@ export default function AdminReports() {
             <table className="w-full text-[13px]">
               <thead>
                 <tr style={{ background: '#1E5AA8' }}>
-                  {['อันดับ', 'ชื่อหมวดหมู่', 'จำนวนคำถาม', 'คะแนนความพึงพอใจ'].map((h) => (
+                  {['อันดับ', 'ชื่อหมวดหมู่', 'จำนวนคำถาม'].map((h) => (
                     <th key={h} className="text-left px-6 py-3 text-[13px] font-semibold text-white uppercase" style={{ letterSpacing: '0.04em' }}>{h}</th>
                   ))}
                 </tr>
@@ -88,7 +87,6 @@ export default function AdminReports() {
                     </td>
                     <td className="px-6 py-4 text-[#14213D] font-medium text-[13px]">{c.name}</td>
                     <td className="px-6 py-4 text-[#14213D] text-[13px]">{c.count.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-green-600 text-[13px] font-medium">{c.satisfaction}%</td>
                   </tr>
                 ))}
               </tbody>

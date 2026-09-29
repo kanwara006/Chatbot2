@@ -41,6 +41,7 @@ export default function LoginPage() {
     <AuthSplitLayout
       headline={<>ยินดีต้อนรับสู่ระบบ<br /><span className="text-[#93C5FD]">PSU SLF AI</span></>}
       description="ระบบผู้ช่วยอัจฉริยะสำหรับกองทุนเงินให้กู้ยืมเพื่อการศึกษา มหาวิทยาลัยสงขลานครินทร์ เข้าถึงข้อมูลง่าย จัดการสะดวก รวดเร็วและปลอดภัย"
+      hideTopBranding
     >
       <div>
           {/* Header */}
@@ -125,7 +126,7 @@ export default function LoginPage() {
                 />
                 <span>จดจำฉันไว้</span>
               </label>
-              <Link to="/contact" className="text-[#0B4DBA] hover:underline font-medium">
+              <Link to="/forgot-password" className="text-[#0B4DBA] hover:underline font-medium">
                 ลืมรหัสผ่าน?
               </Link>
             </div>

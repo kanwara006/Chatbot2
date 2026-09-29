@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { KeyRound, ShieldCheck } from 'lucide-react'
 import Logo from '@/components/common/Logo'
+import heroBackground from '@/assets/images/LC.jpg'
 
 interface AdminAuthSplitLayoutProps {
   headline: ReactNode
@@ -11,32 +12,59 @@ interface AdminAuthSplitLayoutProps {
 
 /**
  * AdminAuthSplitLayout — โครงหน้า Login/Register ของแอดมิน
- * ใช้โครงสร้างการ์ดลอยทับแบบเดียวกับฝั่งผู้ใช้ (AuthSplitLayout) แต่จงใจให้โทนสี
- * ต่างกันชัดเจน (ม่วง/อินดิโก้เข้ม + ขาว แทนที่จะเป็นน้ำเงิน+ขาวแบบผู้ใช้) พร้อมป้าย
+ * ใช้โครงสร้างเดียวกับฝั่งผู้ใช้ (AuthSplitLayout): พื้นหลังเต็มจอเป็นภาพวิทยาเขตจริง
+ * ทับด้วยหมอกสีขาวฟุ้งๆ ตัวกล่องแบ่ง 2 ฝั่งเป็นกระจกฝ้าลอยตรงกลาง แต่จงใจให้โทนสี
+ * ฝั่งซ้ายต่างกันชัดเจน (ม่วง/อินดิโก้เข้ม แทนที่จะเป็นน้ำเงินแบบผู้ใช้) พร้อมป้าย
  * "ADMIN CONSOLE" เพื่อไม่ให้สับสนว่ากำลังอยู่หน้าเจ้าหน้าที่หรือหน้านักศึกษา
+ * (บนมือถือไม่แสดงโลโก้/แบรนด์ใดๆ เหลือแค่การ์ดฟอร์มเปล่าๆ)
  */
 export default function AdminAuthSplitLayout({ headline, description, children }: AdminAuthSplitLayoutProps) {
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4 sm:p-8"
-      style={{ background: '#F5F3FB' }}
-    >
-      <div className="relative w-full max-w-4xl flex flex-col md:flex-row items-stretch" style={{ minHeight: 'min(560px, 80vh)' }}>
-        {/* ── Left Panel: Brand (ม่วง/อินดิโก้เข้ม — เอกลักษณ์เฉพาะของแอดมิน) ── */}
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden p-4 sm:p-8">
+      {/* ── พื้นหลังเต็มจอ: ภาพวิทยาเขตจริง ── */}
+      <div className="absolute inset-0">
+        <img
+          src={heroBackground}
+          alt=""
+          aria-hidden="true"
+          className="w-full h-full object-cover object-[center_30%]"
+        />
+      </div>
+      {/* หมอกสีขาวฟุ้งๆ ทับภาพ */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(160deg, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.55) 45%, rgba(255,255,255,0.85) 100%)' }}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute rounded-full pointer-events-none"
+        style={{ width: 460, height: 460, top: '-12%', left: '-8%', background: 'rgba(196,181,253,0.25)', filter: 'blur(70px)' }}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute rounded-full pointer-events-none"
+        style={{ width: 420, height: 420, bottom: '-12%', right: '-8%', background: 'rgba(196,181,253,0.2)', filter: 'blur(70px)' }}
+        aria-hidden="true"
+      />
+
+      {/* ── กล่องหลัก แบ่ง 2 ฝั่ง ── */}
+      <div className="relative z-10 w-full max-w-4xl flex flex-col md:flex-row items-stretch md:min-h-[min(560px,80vh)]">
+        {/* ── ฝั่งซ้าย: แบรนด์/ข้อความต้อนรับ (กระจกฝ้าม่วงเข้ม — เอกลักษณ์เฉพาะของแอดมิน) ── */}
         <motion.div
-          className="hidden md:flex flex-col justify-between w-full md:w-[46%] rounded-[28px] p-10 lg:p-12 relative overflow-hidden"
-          style={{ background: 'linear-gradient(160deg, #312E81 0%, #5B21B6 100%)' }}
-          initial={{ opacity: 0, x: -20 }}
+          className="hidden md:flex flex-col justify-between w-full md:w-[44%] p-10 lg:p-12 relative overflow-hidden"
+          style={{
+            borderRadius: '22px 0 0 22px',
+            background: 'rgba(49,29,110,0.92)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRight: 'none',
+            boxShadow: '0 30px 60px rgba(49,29,110,0.35)',
+          }}
+          initial={{ opacity: 0, x: -16 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.45, ease: 'easeOut' }}
         >
-          {/* Subtle decorative circle, kept quiet to match the reference's calm mood */}
-          <div
-            className="absolute rounded-full pointer-events-none"
-            style={{ width: 260, height: 260, top: -90, right: -90, background: 'rgba(196,181,253,0.1)' }}
-            aria-hidden="true"
-          />
-
           {/* Badge + Logo */}
           <div className="relative z-10 space-y-3">
             <div
@@ -58,17 +86,22 @@ export default function AdminAuthSplitLayout({ headline, description, children }
             <p className="text-white/65 text-sm mt-3 max-w-sm leading-relaxed">{description}</p>
           </div>
 
-          {/* Simple icon mark instead of an illustration */}
           <div className="relative z-10 flex items-center gap-2 text-[#DDD6FE]/80 text-xs">
             <ShieldCheck size={16} className="flex-shrink-0" />
             <span>สำหรับเจ้าหน้าที่ที่ได้รับสิทธิ์เท่านั้น</span>
           </div>
         </motion.div>
 
-        {/* ── Right Panel: Form Card (floats, overlapping the left panel) ── */}
+        {/* ── ฝั่งขวา: ฟอร์ม (กระจกฝ้าสีขาว) ── */}
         <motion.div
-          className="relative w-full md:w-[58%] md:-ml-10 bg-white rounded-[24px] z-10 flex items-center overflow-hidden"
-          style={{ boxShadow: '0 24px 60px rgba(76,29,149,0.14)' }}
+          className="relative w-full md:w-[56%] flex items-center overflow-hidden rounded-[22px] md:rounded-l-none"
+          style={{
+            background: 'rgba(255,255,255,0.97)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            border: '1px solid rgba(15,23,42,0.06)',
+            boxShadow: '0 35px 80px rgba(49,29,110,0.28), 0 2px 0 rgba(255,255,255,0.8) inset',
+          }}
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.08, ease: 'easeOut' }}

@@ -30,7 +30,6 @@ class Message(Base):
     # Relationships
     conversation = relationship("Conversation", back_populates="messages")
     sources = relationship("MessageSource", back_populates="message", cascade="all, delete-orphan")
-    feedback = relationship("MessageFeedback", back_populates="message", uselist=False, cascade="all, delete-orphan")
 
 
 class MessageSource(Base):
@@ -46,16 +45,3 @@ class MessageSource(Base):
 
     # Relationships
     message = relationship("Message", back_populates="sources")
-
-
-class MessageFeedback(Base):
-    __tablename__ = "message_feedbacks"
-
-    id = Column(Integer, primary_key=True, index=True)
-    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), unique=True, nullable=False)
-    rating = Column(String(10), nullable=False)  # like, dislike
-    comment = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=now_th, nullable=False)
-
-    # Relationships
-    message = relationship("Message", back_populates="feedback")

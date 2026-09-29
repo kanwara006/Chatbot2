@@ -13,7 +13,6 @@ export interface DashboardStats {
   totalDocuments: number
   announcements: number
   faqs: number
-  positiveRate: number
 }
 
 export interface UsageTrendPoint {
@@ -45,9 +44,8 @@ export interface RecentDocument {
 export interface ReportsData {
   totalQuestions: number
   successRate: number
-  avgSatisfaction: number
   usageTrend: { weekday: string; date: string; count: number }[]
-  topCategories: { categoryId: number; name: string; count: number; satisfaction: number }[]
+  topCategories: { categoryId: number; name: string; count: number }[]
 }
 
 export interface EvaluationsData {
@@ -80,7 +78,6 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
       totalDocuments: data.total_documents,
       announcements: data.announcements,
       faqs: data.faqs,
-      positiveRate: data.positive_rate,
     }
   }, DASHBOARD_TTL)
 }
@@ -129,13 +126,11 @@ export async function fetchReports(): Promise<ReportsData> {
     return {
       totalQuestions: data.total_questions,
       successRate: data.success_rate,
-      avgSatisfaction: data.avg_satisfaction,
       usageTrend: data.usage_trend,
       topCategories: (data.top_categories || []).map((c: any) => ({
         categoryId: c.category_id,
         name: c.name,
         count: c.count,
-        satisfaction: c.satisfaction,
       })),
     }
   }, DASHBOARD_TTL)
