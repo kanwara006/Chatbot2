@@ -1,14 +1,41 @@
-import { useState, useMemo, useEffect } from 'react'
-import { Search, ChevronDown, MessageSquare } from 'lucide-react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { Search, ChevronDown, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import PageLayout from '@/components/layout/PageLayout'
+import faqBanner1 from '@/assets/images/faq-banner1.jpg'
+import faqBanner2 from '@/assets/images/faq-banner2.jpg'
+import lcImage from '@/assets/images/LC.jpg'
 import campusImage from '@/assets/images/psu-campus.jpg'
 import type { FAQ } from '@/types'
 import { fetchFAQs } from '@/services/faqService'
 import { fetchCategories, type Category } from '@/services/categoryService'
 
+const faqSlides = [
+  {
+    image: faqBanner1,
+    alt: 'ศูนย์บริการข้อมูลและให้คำปรึกษา กยศ. ม.อ. สุราษฎร์ธานี',
+    badge: 'ศูนย์บริการข้อมูล กยศ.',
+  },
+  {
+    image: faqBanner2,
+    alt: 'ค้นหาคำตอบและแนวทางการกู้ยืมเงินเพื่อการศึกษา',
+    badge: 'คำถามที่พบบ่อย',
+  },
+  {
+    image: lcImage,
+    alt: 'อาคารศูนย์การเรียนรู้ มหาวิทยาลัยสงขลานครินทร์ วิทยาเขตสุราษฎร์ธานี',
+    badge: 'ม.อ. สุราษฎร์ธานี',
+  },
+  {
+    image: campusImage,
+    alt: 'มหาวิทยาลัยสงขลานครินทร์ วิทยาเขตสุราษฎร์ธานี',
+    badge: 'วิทยาเขตสุราษฎร์ธานี',
+  },
+]
+
 /**
- * FAQPage — Matched with Figma FAQ Reference Screen
+ * FAQPage — Matched with Figma FAQ Reference Screen with Auto-sliding Banner Backdrop
  */
 export default function FAQPage() {
   const [faqsData, setFaqsData] = useState<FAQ[]>([])
@@ -17,6 +44,26 @@ export default function FAQPage() {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<number | 'all'>('all')
   const [openIds, setOpenIds] = useState<Set<number>>(new Set())
+
+  // Auto-sliding banner state
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % faqSlides.length)
+  }, [])
+
+  const prevSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev - 1 + faqSlides.length) % faqSlides.length)
+  }, [])
+
+  useEffect(() => {
+    if (isPaused) return
+    const timer = setInterval(() => {
+      nextSlide()
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [isPaused, nextSlide])
 
   useEffect(() => {
     Promise.all([fetchFAQs(), fetchCategories()])
@@ -50,27 +97,80 @@ export default function FAQPage() {
 
   return (
     <PageLayout>
-      {/* ── 1. Hero Section with Campus Backdrop ─────────────────── */}
-      <section className="relative w-full overflow-hidden" style={{ minHeight: '260px' }}>
-        <div className="absolute inset-0">
-          <img
-            src={campusImage}
-            alt="มหาวิทยาลัยสงขลานครินทร์"
-            className="w-full h-full object-cover object-center"
-          />
+      {/* ── 1. Hero Section with Auto-sliding Advertisement Backdrop ─ */}
+      <section
+        className="relative w-full overflow-hidden min-h-[380px] sm:min-h-[420px] md:min-h-[450px] flex items-center justify-center"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
+        {/* Background Image Slideshow */}
+        <div className="absolute inset-0 overflow-hidden bg-slate-950">
+          <AnimatePresence initial={false} mode="sync">
+            <motion.div
+              key={currentSlide}
+              className="absolute inset-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.7, ease: 'easeInOut' }}
+            >
+              <img
+                src={faqSlides[currentSlide].image}
+                alt={faqSlides[currentSlide].alt}
+                className="w-full h-full object-cover object-center"
+              />
+            </motion.div>
+          </AnimatePresence>
         </div>
+
+        {/* Gradient Overlay for Text Readability & Image Vibrancy */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'linear-gradient(180deg, rgba(6,46,102,0.88) 0%, rgba(6,46,102,0.95) 100%)',
+            background:
+              'linear-gradient(180deg, rgba(6,25,60,0.38) 0%, rgba(6,35,80,0.52) 50%, rgba(6,46,102,0.82) 100%)',
           }}
         />
-        <div className="container-main relative z-10 py-12 md:py-16 text-center text-white">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-2">
+
+        {/* Navigation Dots and Controls */}
+        <div className="absolute bottom-11 right-4 sm:right-8 z-20 flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20 shadow-md">
+            {faqSlides.map((slide, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                aria-label={`ไปยังแบนเนอร์ที่ ${idx + 1}: ${slide.badge}`}
+                className={`transition-all duration-300 rounded-full h-2 cursor-pointer ${
+                  currentSlide === idx ? 'w-6 bg-[#60A5FA]' : 'w-2 bg-white/40 hover:bg-white/80'
+                }`}
+              />
+            ))}
+          </div>
+          <div className="hidden sm:flex items-center gap-1">
+            <button
+              onClick={prevSlide}
+              aria-label="ภาพก่อนหน้า"
+              className="p-1.5 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-md border border-white/20 transition-colors cursor-pointer"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              onClick={nextSlide}
+              aria-label="ภาพถัดไป"
+              className="p-1.5 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-md border border-white/20 transition-colors cursor-pointer"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="container-main relative z-10 pt-16 pb-20 md:pt-20 md:pb-24 text-center text-white">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
             คำถามที่พบบ่อย (FAQ)
           </h1>
-          <p className="text-white/80 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-            ค้นหาคำตอบสำหรับข้อสงสัยเบื้องต้นเกี่ยวกับการกู้ยืมเงิน กยศ.
+          <p className="text-white/95 text-xs sm:text-sm md:text-base max-w-xl mx-auto leading-relaxed drop-shadow-[0_1px_5px_rgba(0,0,0,0.75)] font-normal">
+            ค้นหาคำตอบสำหรับข้อสงสัยเบื้องต้นเกี่ยวกับการกู้ยืมเงิน กยศ. มหาวิทยาลัยสงขลานครินทร์ วิทยาเขตสุราษฎร์ธานี
           </p>
         </div>
       </section>

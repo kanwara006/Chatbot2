@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Search, CalendarDays, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import PageLayout from '@/components/layout/PageLayout'
+import psuMainBuilding from '@/assets/images/psu-surat-main-high.jpg'
 import campusImage from '@/assets/images/psu-campus.jpg'
 import banner1 from '@/assets/images/banner1.jpg'
 import banner2 from '@/assets/images/banner2.jpg'
@@ -24,6 +25,11 @@ const BADGE_COLORS = ['bg-[#EF4444] text-white', 'bg-[#3B82F6] text-white', 'bg-
 const PAGE_SIZE = 6
 
 const announcementSlides = [
+  {
+    image: psuMainBuilding,
+    alt: 'มหาวิทยาลัยสงขลานครินทร์ วิทยาเขตสุราษฎร์ธานี',
+    badge: 'ม.อ. สุราษฎร์ธานี',
+  },
   {
     image: banner1,
     alt: 'โอกาสทางการศึกษา กยศ. เพื่อนักศึกษา ม.อ. สุราษฎร์ฯ',
@@ -161,9 +167,8 @@ export default function AnnouncementsPage() {
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
                 aria-label={`ไปยังแบนเนอร์ที่ ${idx + 1}: ${slide.badge}`}
-                className={`transition-all duration-300 rounded-full h-2 cursor-pointer ${
-                  currentSlide === idx ? 'w-6 bg-[#60A5FA]' : 'w-2 bg-white/40 hover:bg-white/80'
-                }`}
+                className={`transition-all duration-300 rounded-full h-2 cursor-pointer ${currentSlide === idx ? 'w-6 bg-[#60A5FA]' : 'w-2 bg-white/40 hover:bg-white/80'
+                  }`}
               />
             ))}
           </div>
