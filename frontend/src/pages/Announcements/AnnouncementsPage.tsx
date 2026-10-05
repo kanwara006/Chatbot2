@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { Search, CalendarDays, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, CalendarDays, ArrowRight, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import PageLayout from '@/components/layout/PageLayout'
 import psuMainBuilding from '@/assets/images/psu-surat-main-high.jpg'
@@ -205,52 +205,66 @@ export default function AnnouncementsPage() {
       {/* ── 2. Floating Search & Category Filter Card ─────────────── */}
       <section className="relative z-20" style={{ marginTop: '-32px' }}>
         <div className="container-main">
-          <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(6,46,102,0.08)] border border-[#DDE2EA] flex flex-col gap-4">
-            {/* Search input — full width, on top */}
+          <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(6,46,102,0.08)] border border-[#DDE2EA] flex flex-col gap-3.5">
+            {/* Search input — full width with quick clear button */}
             <div className="relative w-full">
-              <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
+              <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
               <input
                 id="search-announcements"
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="ค้นหาข่าวสารและประกาศ..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm border border-[#DDE2EA] outline-none bg-[#F7F8FA] focus:bg-white focus:border-[#0B4DBA] text-[#111827] placeholder-[#94A3B8] transition-all"
+                className="w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-xl text-sm border border-[#DDE2EA] outline-none bg-[#F8FAFC] focus:bg-white focus:border-[#0B4DBA] focus:ring-2 focus:ring-[#0B4DBA]/10 text-[#111827] placeholder-[#94A3B8] transition-all"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  aria-label="ล้างคำค้นหา"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-[#94A3B8] hover:text-[#111827] hover:bg-[#F1F5F9] transition-colors cursor-pointer"
+                >
+                  <X size={15} />
+                </button>
+              )}
             </div>
 
-            {/* Category Filter Chips — row below the search box */}
-            <div className="flex flex-wrap items-center gap-2 w-full">
-              <button
-                onClick={() => setActiveCategory('all')}
-                className={`
-                  px-4 py-2 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer
-                  ${activeCategory === 'all'
-                    ? 'bg-[#0B4DBA] text-white shadow-[0_2px_8px_rgba(11,77,186,0.25)]'
-                    : 'bg-[#F7F8FA] text-[#5F6673] hover:bg-[#E5EDFF] hover:text-[#0B4DBA] border border-[#DDE2EA]'
-                  }
-                `}
-              >
-                ทั้งหมด
-              </button>
-              {categories.map((cat) => {
-                const isActive = activeCategory === cat.id
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setActiveCategory(cat.id)}
-                    className={`
-                      px-4 py-2 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer
-                      ${isActive
-                        ? 'bg-[#0B4DBA] text-white shadow-[0_2px_8px_rgba(11,77,186,0.25)]'
-                        : 'bg-[#F7F8FA] text-[#5F6673] hover:bg-[#E5EDFF] hover:text-[#0B4DBA] border border-[#DDE2EA]'
-                      }
-                    `}
-                  >
-                    {cat.name}
-                  </button>
-                )
-              })}
+            {/* Category Filter Chips — Horizontal Swipeable on Mobile, Responsive Wrap on Desktop */}
+            <div className="relative w-full overflow-hidden">
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 px-0.5 sm:flex-wrap">
+                <button
+                  onClick={() => setActiveCategory('all')}
+                  className={`
+                    shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer select-none active:scale-95
+                    ${activeCategory === 'all'
+                      ? 'bg-[#0B4DBA] text-white shadow-[0_2px_8px_rgba(11,77,186,0.28)] ring-2 ring-[#0B4DBA]/20'
+                      : 'bg-[#F8FAFC] text-[#5F6673] hover:bg-[#EFF6FF] hover:text-[#0B4DBA] border border-[#DDE2EA]'
+                    }
+                  `}
+                >
+                  ทั้งหมด
+                </button>
+                {categories.map((cat, idx) => {
+                  const isActive = activeCategory === cat.id
+                  return (
+                    <button
+                      key={`cat-${cat.id ?? idx}-${idx}`}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={`
+                        shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer select-none active:scale-95
+                        ${isActive
+                          ? 'bg-[#0B4DBA] text-white shadow-[0_2px_8px_rgba(11,77,186,0.28)] ring-2 ring-[#0B4DBA]/20'
+                          : 'bg-[#F8FAFC] text-[#5F6673] hover:bg-[#EFF6FF] hover:text-[#0B4DBA] border border-[#DDE2EA]'
+                        }
+                      `}
+                    >
+                      {cat.name}
+                    </button>
+                  )
+                })}
+              </div>
+              {/* Subtle edge fade indicator for mobile horizontal scroll */}
+              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white via-white/80 to-transparent sm:hidden" />
             </div>
           </div>
         </div>
