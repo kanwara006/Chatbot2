@@ -9,7 +9,7 @@ const navLinks = [
   { label: 'หน้าแรก',         href: '/' },
   { label: 'ข่าวและประกาศ',   href: '/announcements' },
   { label: 'คำถามที่พบบ่อย', href: '/faq' },
-  { label: 'ติดต่อเรา',       href: '/contact' },
+  { label: 'ติดต่อเจ้าหน้าที่', href: '/contact' },
 ]
 
 /**

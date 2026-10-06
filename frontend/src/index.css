@@ -288,3 +288,12 @@ table, th, td,
   outline-offset: 2px;
   border-radius: 6px;
 }
+
+/* Hide scrollbar utility for swipeable horizontal tabs */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

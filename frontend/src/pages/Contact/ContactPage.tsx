@@ -1,13 +1,40 @@
-import { useState } from 'react'
-import { Phone, Mail, MapPin, Send } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Phone, Mail, MapPin, Send, ChevronLeft, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import PageLayout from '@/components/layout/PageLayout'
+import contactBanner1 from '@/assets/images/contact-banner1.jpg'
+import contactBanner2 from '@/assets/images/contact-banner2.jpg'
 import campusImage from '@/assets/images/psu-campus.jpg'
+import lcImage from '@/assets/images/LC.jpg'
 import toast from 'react-hot-toast'
 import { submitContactMessage } from '@/services/contactService'
 import { extractErrorMessage } from '@/services/authService'
 
+const contactSlides = [
+  {
+    image: contactBanner1,
+    alt: 'จุดบริการให้คำปรึกษาและช่วยเหลืองานกองทุน กยศ. ม.อ. สุราษฎร์ธานี',
+    badge: 'งานกองทุนเงินให้กู้ยืมเพื่อการศึกษา',
+  },
+  {
+    image: contactBanner2,
+    alt: 'ศูนย์ติดต่อสื่อสารและบริการข้อมูลนักศึกษา',
+    badge: 'ติดต่อสอบถามเจ้าหน้าที่',
+  },
+  {
+    image: campusImage,
+    alt: 'มหาวิทยาลัยสงขลานครินทร์ วิทยาเขตสุราษฎร์ธานี',
+    badge: 'วิทยาเขตสุราษฎร์ธานี',
+  },
+  {
+    image: lcImage,
+    alt: 'อาคารศูนย์การเรียนรู้ มหาวิทยาลัยสงขลานครินทร์ วิทยาเขตสุราษฎร์ธานี',
+    badge: 'ม.อ. สุราษฎร์ธานี',
+  },
+]
+
 /**
- * ContactPage — Matched with Figma Contact Screen Reference
+ * ContactPage — Matched with Figma Contact Screen Reference with Auto-sliding Banner Backdrop
  */
 export default function ContactPage() {
   const [form, setForm] = useState({
@@ -18,6 +45,26 @@ export default function ContactPage() {
     message: '',
   })
   const [loading, setLoading] = useState(false)
+
+  // Auto-sliding banner state
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % contactSlides.length)
+  }, [])
+
+  const prevSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev - 1 + contactSlides.length) % contactSlides.length)
+  }, [])
+
+  useEffect(() => {
+    if (isPaused) return
+    const timer = setInterval(() => {
+      nextSlide()
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [isPaused, nextSlide])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,27 +93,80 @@ export default function ContactPage() {
 
   return (
     <PageLayout>
-      {/* ── 1. Hero Section with Campus Backdrop ─────────────────── */}
-      <section className="relative w-full overflow-hidden" style={{ minHeight: '260px' }}>
-        <div className="absolute inset-0">
-          <img
-            src={campusImage}
-            alt="มหาวิทยาลัยสงขลานครินทร์"
-            className="w-full h-full object-cover object-center"
-          />
+      {/* ── 1. Hero Section with Auto-sliding Advertisement Backdrop ─ */}
+      <section
+        className="relative w-full overflow-hidden min-h-[380px] sm:min-h-[420px] md:min-h-[450px] flex items-center justify-center"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
+        {/* Background Image Slideshow */}
+        <div className="absolute inset-0 overflow-hidden bg-slate-950">
+          <AnimatePresence initial={false} mode="sync">
+            <motion.div
+              key={currentSlide}
+              className="absolute inset-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.7, ease: 'easeInOut' }}
+            >
+              <img
+                src={contactSlides[currentSlide].image}
+                alt={contactSlides[currentSlide].alt}
+                className="w-full h-full object-cover object-center"
+              />
+            </motion.div>
+          </AnimatePresence>
         </div>
+
+        {/* Gradient Overlay for Text Readability & Image Vibrancy */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'linear-gradient(180deg, rgba(6,46,102,0.88) 0%, rgba(6,46,102,0.95) 100%)',
+            background:
+              'linear-gradient(180deg, rgba(6,25,60,0.38) 0%, rgba(6,35,80,0.52) 50%, rgba(6,46,102,0.82) 100%)',
           }}
         />
-        <div className="container-main relative z-10 py-12 md:py-16 text-center text-white">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-2">
+
+        {/* Navigation Dots and Controls */}
+        <div className="absolute bottom-11 right-4 sm:right-8 z-20 flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20 shadow-md">
+            {contactSlides.map((slide, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                aria-label={`ไปยังแบนเนอร์ที่ ${idx + 1}: ${slide.badge}`}
+                className={`transition-all duration-300 rounded-full h-2 cursor-pointer ${
+                  currentSlide === idx ? 'w-6 bg-[#60A5FA]' : 'w-2 bg-white/40 hover:bg-white/80'
+                }`}
+              />
+            ))}
+          </div>
+          <div className="hidden sm:flex items-center gap-1">
+            <button
+              onClick={prevSlide}
+              aria-label="ภาพก่อนหน้า"
+              className="p-1.5 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-md border border-white/20 transition-colors cursor-pointer"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              onClick={nextSlide}
+              aria-label="ภาพถัดไป"
+              className="p-1.5 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-md border border-white/20 transition-colors cursor-pointer"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="container-main relative z-10 pt-16 pb-20 md:pt-20 md:pb-24 text-center text-white">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
             ติดต่อเรา
           </h1>
-          <p className="text-white/80 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-            สอบถามข้อมูลเพิ่มเติมเกี่ยวกับกองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.) หรือต้องการความช่วยเหลือในการใช้งานระบบ
+          <p className="text-white/95 text-xs sm:text-sm md:text-base max-w-xl mx-auto leading-relaxed drop-shadow-[0_1px_5px_rgba(0,0,0,0.75)] font-normal">
+            สอบถามข้อมูลเพิ่มเติมเกี่ยวกับกองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.) หรือต้องการความช่วยเหลือในการใช้งานระบบ มหาวิทยาลัยสงขลานครินทร์ วิทยาเขตสุราษฎร์ธานี
           </p>
         </div>
       </section>
