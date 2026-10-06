@@ -153,18 +153,18 @@ export default function AdminUsers() {
                         {user.firstName.charAt(0)}
                       </div>
                       <div>
-                        <p className="font-medium text-[#14213D] text-[13px]">{user.firstName} {user.lastName}</p>
+                        <p className="font-medium text-[#14213D] text-[13px] whitespace-nowrap">{user.firstName} {user.lastName}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3.5 text-[13px] text-[#334155]">{user.studentId}</td>
+                  <td className="px-4 py-3.5 text-[13px] text-[#334155] whitespace-nowrap">{user.studentId}</td>
                   <td className="px-4 py-3.5">
-                    <a href={`mailto:${user.email}`} className="flex items-center gap-1 text-[13px] text-[#1E5AA8] hover:underline">
+                    <a href={`mailto:${user.email}`} className="flex items-center gap-1 text-[13px] text-[#1E5AA8] hover:underline whitespace-nowrap">
                       <Mail size={11} />{user.email}
                     </a>
                   </td>
                   <td className="px-4 py-3.5 text-[13px] text-[#334155] whitespace-nowrap">{user.faculty}</td>
-                  <td className="px-4 py-3.5">
+                  <td className="px-4 py-3.5 whitespace-nowrap">
                     {(() => {
                       const isWhiteRow = i % 2 === 0
                       const roleColor = user.role === 'admin' ? '#4F46E5' : '#1E5AA8'
@@ -194,9 +194,9 @@ export default function AdminUsers() {
                       )
                     })()}
                   </td>
-                  <td className="px-4 py-3.5">
+                  <td className="px-4 py-3.5 whitespace-nowrap">
                     <span
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[13px] font-medium"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[13px] font-medium whitespace-nowrap"
                       style={user.isActive
                         ? { background: i % 2 === 0 ? '#EFF6FF' : '#FFFFFF', color: '#1E5AA8', border: '1.5px solid #BFDBFE' }
                         : { background: '#F1F5F9', color: '#94A3B8', border: '1.5px solid transparent' }}
@@ -205,10 +205,10 @@ export default function AdminUsers() {
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-[13px] text-[#475569] whitespace-nowrap">{formatThaiDate(user.createdAt)}</td>
-                  <td className="px-4 py-3.5">
+                  <td className="px-4 py-3.5 whitespace-nowrap">
                     <button
                       onClick={() => toggleActive(user.id)}
-                      className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${user.isActive
+                      className={`px-3 py-1.5 rounded-lg text-[13px] font-medium whitespace-nowrap transition-all ${user.isActive
                         ? 'text-red-500 hover:bg-red-50'
                         : 'text-green-600 hover:bg-green-50'}`}>
                       {user.isActive ? 'ระงับ' : 'เปิดใช้'}
